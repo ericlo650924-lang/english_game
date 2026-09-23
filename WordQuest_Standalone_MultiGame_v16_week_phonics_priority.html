@@ -1,0 +1,3359 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Quest Standalone -  Quiz - 英選中 / 中選英 5 選 1</title>
+  <style>
+    :root {
+      --bg: #f5efe1;
+      --panel: #fffaf0;
+      --text: #263238;
+      --muted: #6b7280;
+      --main: #4dabf7;
+      --main-dark: #1971c2;
+      --ok: #2f9e44;
+      --bad: #e03131;
+      --warn: #f59f00;
+      --border: #e3d5b8;
+      --shadow: 0 12px 28px rgba(35, 30, 20, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Comic Sans MS", "Noto Sans TC", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, #dff4ff 0, transparent 30%),
+        radial-gradient(circle at 88% 88%, #ffe8cc 0, transparent 34%),
+        var(--bg);
+    }
+
+    .app {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    header {
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: stretch;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .title, .scoreboard, .game-card, .control-panel, .wrong-panel {
+      background: rgba(255, 250, 240, 0.94);
+      border: 2px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .title {
+      padding: 16px 20px;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .scoreboard {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(74px, 1fr));
+      gap: 8px;
+      min-width: min(100%, 500px);
+    }
+
+    .stat {
+      background: #fff;
+      border: 2px solid #eadfcb;
+      border-radius: 18px;
+      padding: 9px 8px;
+      text-align: center;
+    }
+
+    .stat .label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat .value {
+      font-size: 23px;
+      font-weight: 1000;
+    }
+
+    .control-panel {
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button, select {
+      font-family: inherit;
+      font-size: 16px;
+      border-radius: 16px;
+      border: 2px solid #b8a981;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    input[type="range"] {
+      width: 130px;
+      accent-color: var(--main-dark);
+      cursor: pointer;
+    }
+
+    .volume-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 2px solid #eadfcb;
+      border-radius: 16px;
+      padding: 8px 12px;
+      font-weight: 900;
+    }
+
+    .volume-value {
+      min-width: 42px;
+      color: var(--muted);
+      text-align: right;
+      font-size: 14px;
+    }
+
+    button {
+      background: #ffe08a;
+      font-weight: 1000;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    button:hover { filter: brightness(1.04); }
+    button:active { transform: scale(0.98); }
+    button:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
+
+    .game-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 540px;
+      padding: clamp(18px, 3vw, 30px);
+    }
+
+    .question-area {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .word-box {
+      background: linear-gradient(135deg, #e7f5ff, #ffffff);
+      border: 3px solid #a5d8ff;
+      border-radius: 28px;
+      padding: clamp(18px, 3vw, 32px);
+      text-align: center;
+      min-height: 190px;
+      display: grid;
+      place-items: center;
+    }
+
+    .prompt-label {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .word {
+      font-size: clamp(44px, 8vw, 82px);
+      font-weight: 1000;
+      color: #0b7285;
+      line-height: 1;
+      letter-spacing: 0.5px;
+    }
+
+    .kk {
+      font-size: clamp(20px, 3vw, 30px);
+      color: #495057;
+      font-weight: 900;
+      margin-top: 14px;
+    }
+
+    .speak-row {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .speaker {
+      background: #d3f9d8;
+      border-color: #69db7c;
+    }
+
+    .options {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .option {
+      min-height: 92px;
+      background: #fff;
+      border: 3px solid #dee2e6;
+      border-radius: 22px;
+      font-size: clamp(17px, 2vw, 23px);
+      font-weight: 1000;
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px;
+      transition: transform 0.12s ease, background 0.12s ease, border 0.12s ease;
+    }
+
+    .option:hover {
+      transform: translateY(-3px);
+      border-color: var(--main);
+    }
+
+    .option.correct {
+      background: #d3f9d8;
+      border-color: var(--ok);
+      color: #1b5e20;
+      animation: goodPulse 0.5s ease;
+    }
+
+    .option.wrong {
+      background: #ffe3e3;
+      border-color: var(--bad);
+      color: #8a1c1c;
+      animation: shake 0.36s ease;
+    }
+
+    .option.reveal {
+      background: #d3f9d8;
+      border-color: var(--ok);
+    }
+
+    @keyframes goodPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .message {
+      margin-top: 18px;
+      min-height: 34px;
+      font-size: 22px;
+      font-weight: 1000;
+      text-align: center;
+    }
+
+    .progress {
+      margin-top: 16px;
+      height: 18px;
+      border-radius: 999px;
+      background: #e9ecef;
+      overflow: hidden;
+      border: 2px solid #ced4da;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #74c0fc, #69db7c);
+      transition: width 0.25s ease;
+    }
+
+    .buddy-wrap {
+      position: relative;
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+    }
+
+    .speech {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      background: #fff;
+      border: 3px solid #7c4a22;
+      border-radius: 20px;
+      padding: 10px 12px;
+      font-weight: 1000;
+      text-align: center;
+      box-shadow: var(--shadow);
+      max-width: 180px;
+      z-index: 2;
+    }
+
+    .buddy-stage {
+      width: 180px;
+      height: 200px;
+      margin-top: 34px;
+      filter: drop-shadow(0 12px 12px rgba(0,0,0,0.16));
+      transform-origin: bottom center;
+    }
+
+    .buddy-stage .buddy-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      animation: idle 2.4s ease-in-out infinite;
+    }
+
+    .buddy-stage.happy .buddy-svg {
+      animation: jump 0.7s ease, idle 2.4s ease-in-out 0.7s infinite;
+    }
+
+    .buddy-stage.sad .buddy-svg {
+      animation: buddyShake 0.5s ease;
+    }
+
+    @keyframes idle {
+      0%, 100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-7px) rotate(1deg); }
+    }
+
+    @keyframes jump {
+      0%, 100% { transform: translateY(0) scale(1); }
+      40% { transform: translateY(-32px) scale(1.06); }
+    }
+
+    @keyframes buddyShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-9px) rotate(-2deg); }
+      40% { transform: translateX(9px) rotate(2deg); }
+      60% { transform: translateX(-7px) rotate(-2deg); }
+      80% { transform: translateX(7px) rotate(2deg); }
+    }
+
+    .reward {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      pointer-events: none;
+      z-index: 50;
+      animation: fade 1.1s ease forwards;
+    }
+
+    .reward.show { display: grid; }
+
+    .reward-card {
+      background: rgba(255, 250, 240, 0.98);
+      border: 5px solid #ffd43b;
+      border-radius: 30px;
+      padding: 26px 34px;
+      text-align: center;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.2);
+      animation: pop 0.55s ease forwards;
+    }
+
+    .reward-emoji {
+      font-size: 58px;
+      line-height: 1;
+    }
+
+    .reward-text {
+      margin-top: 8px;
+      font-size: 32px;
+      font-weight: 1000;
+    }
+
+    .reward-stars {
+      display: none;
+      margin-top: 8px;
+      font-size: 44px;
+      color: #f59f00;
+      letter-spacing: 8px;
+    }
+
+    @keyframes fade {
+      0% { opacity: 0; }
+      15% { opacity: 1; }
+      82% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.7) rotate(-4deg); }
+      60% { transform: scale(1.08) rotate(2deg); }
+      100% { transform: scale(1); }
+    }
+
+    .score-pop {
+      position: fixed;
+      left: 50%;
+      top: 35%;
+      transform: translate(-50%, -50%);
+      z-index: 60;
+      font-size: 44px;
+      font-weight: 1000;
+      pointer-events: none;
+      animation: scorePop 0.9s ease forwards;
+      text-shadow: 0 3px 0 rgba(255,255,255,0.75);
+    }
+
+    .score-pop.good { color: var(--ok); }
+    .score-pop.bad { color: var(--bad); }
+
+    @keyframes scorePop {
+      0% { transform: translate(-50%, -20%) scale(0.7); opacity: 0; }
+      18% { opacity: 1; }
+      100% { transform: translate(-50%, -110%) scale(1.2); opacity: 0; }
+    }
+
+    .wrong-panel {
+      margin-top: 16px;
+      padding: 14px 16px;
+    }
+
+    .wrong-panel h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .wrong-panel p {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .wrong-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .wrong-chip {
+      border: 2px solid #ffc9c9;
+      background: #fff5f5;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .wrong-chip strong { color: #c92a2a; }
+
+    .footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+
+
+    .game-mode-panel {
+      background: rgba(255, 250, 240, 0.94);
+      border: 2px solid var(--border);
+      border-radius: 24px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .game-mode-title {
+      font-size: 18px;
+      font-weight: 1000;
+      margin-bottom: 10px;
+    }
+    .game-mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .game-mode-btn {
+      min-height: 58px;
+      background: #fff;
+      border: 3px solid #dee2e6;
+      border-radius: 18px;
+      font-size: 17px;
+      font-weight: 1000;
+      padding: 9px 8px;
+    }
+    .game-mode-btn.active {
+      background: #dff4ff;
+      border-color: var(--main-dark);
+      color: #0b7285;
+    }
+    @media (max-width: 760px) {
+      .game-mode-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .game-mode-btn:last-child { grid-column: 1 / -1; }
+    }
+
+    .special-game { margin-top: 22px; }
+    .memory-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .memory-card { min-height:82px; border:3px solid #dee2e6; border-radius:18px; background:#fff; font-size:18px; font-weight:1000; padding:10px; }
+    .memory-card.covered { background:#dbeafe; color:#1d4ed8; font-size:28px; }
+    .memory-card.matched { background:#d3f9d8; border-color:var(--ok); color:#1b5e20; }
+    .letter-bank,.answer-bank { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:14px; min-height:58px; }
+    .letter-tile { min-width:48px; min-height:48px; border:3px solid #ced4da; border-radius:14px; background:#fff; font-size:25px; font-weight:1000; }
+    .answer-slot { min-width:48px; min-height:52px; border-bottom:4px solid #adb5bd; display:grid; place-items:center; font-size:28px; font-weight:1000; }
+    .action-row { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:14px; }
+    .phonics-prompt { font-size:clamp(36px,7vw,68px); font-weight:1000; text-align:center; color:#0b7285; margin:6px 0 16px; }
+    .sentence-box { font-size:clamp(25px,4vw,40px); font-weight:1000; line-height:1.45; text-align:center; padding:20px; background:#fff; border:3px solid #a5d8ff; border-radius:22px; }
+    .sentence-blank { color:#1971c2; border-bottom:4px solid #1971c2; padding:0 16px; }
+    .mode-note { text-align:center; color:var(--muted); font-weight:900; margin-top:8px; }
+    @media (max-width: 600px) { .memory-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.memory-card{min-height:64px;font-size:14px;padding:6px;} }
+
+    @media (max-width: 860px) {
+      .scoreboard { grid-template-columns: repeat(3, 1fr); }
+      .question-area { grid-template-columns: 1fr; }
+      .buddy-wrap { min-height: 170px; }
+      .buddy-stage { width: 130px; height: 145px; }
+      .speech { right: auto; top: -4px; }
+      .options { grid-template-columns: 1fr; }
+      .option { min-height: 66px; }
+    }
+  
+    /* IMPORTANT: game-mode visibility fix.
+       Components such as .word-box and .options define display:grid,
+       so force the HTML hidden attribute to win when switching modes. */
+    [hidden] { display: none !important; }
+
+  
+    .mode-hidden { display: none !important; }
+
+  
+    .scramble-word {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 22px 0 16px;
+    }
+
+    .answer-slot.fixed-letter {
+      background: #eef2f7;
+      border-color: #cbd5e1;
+      color: #334155;
+    }
+
+  
+    .memory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .memory-grid[data-board="4 × 8"] .memory-card {
+      min-height: 64px;
+      font-size: 15px;
+      padding: 7px;
+    }
+
+  
+    .memory-card.preview {
+      background: #fff;
+      border-color: #74c0fc;
+      color: var(--text);
+    }
+
+    .memory-countdown {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 1000;
+      margin: 8px 0 12px;
+      color: #1971c2;
+    }
+
+  
+    .finish-celebration {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(15, 23, 42, 0.52);
+      z-index: 120;
+      overflow: hidden;
+    }
+    .finish-celebration.show { display: grid; }
+
+    .finish-card {
+      position: relative;
+      z-index: 2;
+      width: min(90vw, 460px);
+      background: rgba(255,255,255,0.97);
+      border: 4px solid #ffd43b;
+      border-radius: 30px;
+      padding: 28px 24px 24px;
+      text-align: center;
+      box-shadow: 0 22px 50px rgba(0,0,0,0.24);
+      animation: finishPop 0.62s cubic-bezier(.2,.9,.2,1.15);
+    }
+    .finish-trophy {
+      font-size: 76px;
+      line-height: 1;
+      animation: trophyBounce 1.1s ease-in-out infinite;
+    }
+    .finish-title {
+      margin-top: 8px;
+      font-size: 34px;
+      font-weight: 1000;
+    }
+    .finish-summary {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #495057;
+      line-height: 1.5;
+    }
+    .finish-stars {
+      margin-top: 12px;
+      min-height: 52px;
+      font-size: 44px;
+      letter-spacing: 8px;
+      color: #f59f00;
+    }
+    .finish-actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .finish-actions button:first-child {
+      background: #d3f9d8;
+      border-color: #69db7c;
+    }
+
+    .confetti-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .confetti-piece {
+      position: absolute;
+      top: -30px;
+      width: 12px;
+      height: 18px;
+      border-radius: 3px;
+      opacity: 0.95;
+      animation-name: confettiFall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes finishPop {
+      0% { transform: scale(.68) rotate(-3deg); opacity: 0; }
+      60% { transform: scale(1.06) rotate(1deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); }
+    }
+    @keyframes trophyBounce {
+      0%,100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-10px) rotate(3deg); }
+    }
+    @keyframes confettiFall {
+      0% { transform: translate3d(0, -10px, 0) rotate(0deg); }
+      100% { transform: translate3d(var(--drift), 105vh, 0) rotate(var(--spin)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .finish-card, .finish-trophy, .confetti-piece { animation: none !important; }
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <section class="title">
+        <h1>Word Quest 多模式英文遊戲 🎮</h1>
+        <p class="subtitle">先按上方遊戲按鈕切換：五選一 / 翻牌 / 拼字 / 自然發音 / 句子填空</p>
+      </section>
+
+      <section class="scoreboard">
+        <div class="stat"><span class="label">題目</span><span id="round" class="value">0/10</span></div>
+        <div class="stat"><span class="label">答對</span><span id="correct" class="value">0</span></div>
+        <div class="stat"><span class="label">分數</span><span id="score" class="value">0</span></div>
+        <div class="stat"><span class="label">錯誤</span><span id="wrongAttempts" class="value">0/3</span></div>
+        <div class="stat"><span class="label">星星</span><span id="stars" class="value">0</span></div>
+      </section>
+    </header>
+
+
+    <section class="game-mode-panel" aria-label="遊戲模式">
+      <div class="game-mode-title">選擇遊戲</div>
+      <div class="game-mode-tabs" id="gameModeTabs">
+        <button type="button" class="game-mode-btn active" data-game="quiz">🎯 五選一</button>
+        <button type="button" class="game-mode-btn" data-game="memory">🃏 翻牌</button>
+        <button type="button" class="game-mode-btn" data-game="scramble">🔤 拼字</button>
+        <button type="button" class="game-mode-btn" data-game="phonics">🔊 自然發音</button>
+        <button type="button" class="game-mode-btn" data-game="sentence">📝 句子填空</button>
+      </div>
+    </section>
+
+    <section class="control-panel">
+      <label id="roundCountWrap">
+        題數：
+        <select id="roundCount">
+          <option value="6">6 題</option>
+          <option value="10" selected>10 題</option>
+          <option value="15">15 題</option>
+        </select>
+      </label>
+      <label id="weekSelectWrap">
+        週次：
+        <select id="weekSelect">
+          <option value="all" selected>全部單字</option>
+          <option value="0">原單字庫</option>
+        </select>
+      </label>
+      <label id="memorySizeWrap" class="mode-hidden">
+        翻牌大小：
+        <select id="memorySize">
+          <option value="4">4 × 2（4 組 / 8 張）</option>
+          <option value="8" selected>4 × 4（8 組 / 16 張）</option>
+          <option value="16">4 × 8（16 組 / 32 張）</option>
+        </select>
+      </label>
+      <label id="memoryPreviewWrap" class="mode-hidden">
+        記憶時間：
+        <select id="memoryPreview">
+          <option value="3000">3 秒</option>
+          <option value="6000" selected>6 秒</option>
+          <option value="9000">9 秒</option>
+        </select>
+      </label>
+      <label id="gameTypeWrap">
+        遊戲類型（下拉）：
+        <select id="gameType">
+          <option value="quiz" selected>🎯 五選一</option>
+          <option value="memory">🃏 翻牌配對</option>
+          <option value="scramble">🔤 打亂拼字</option>
+          <option value="phonics">🔊 自然發音</option>
+          <option value="sentence">📝 句子填空</option>
+        </select>
+      </label>
+      <label id="quizModeWrap">
+        出題模式：
+        <select id="quizMode">
+          <option value="en_to_zh" selected>英選中</option>
+          <option value="zh_to_en">中選英</option>
+        </select>
+      </label>
+      <label id="autoNextDelayWrap">
+        答對停留：
+        <select id="autoNextDelay">
+          <option value="1200">1.2 秒</option>
+          <option value="1800" selected>1.8 秒</option>
+          <option value="2500">2.5 秒</option>
+          <option value="3500">3.5 秒</option>
+        </select>
+      </label>
+      <label id="characterWrap">
+        角色：
+        <select id="characterSelect">
+          <option value="lion" selected>小獅子</option>
+          <option value="rabbit">兔兔</option>
+          <option value="cat">小貓</option>
+          <option value="dog">小狗</option>
+          <option value="panda">熊貓</option>
+          <option value="bear">小熊</option>
+          <option value="fox">狐狸</option>
+          <option value="penguin">企鵝</option>
+          <option value="frog">青蛙</option>
+          <option value="robot">機器人</option>
+        </select>
+      </label>
+      <div class="volume-box" id="volumeWrap">
+        音量
+        <input id="volume" type="range" min="0" max="100" value="55" />
+        <span id="volumeValue" class="volume-value">55%</span>
+      </div>
+      <label id="musicStyleWrap">
+        背景音樂：
+        <select id="musicStyle">
+          <option value="off">關閉</option>
+          <option value="adventure" selected>冒險</option>
+          <option value="happy">快樂</option>
+          <option value="calm">輕鬆</option>
+          <option value="victory">勝利</option>
+        </select>
+      </label>
+      <button id="musicToggle" class="common-control">🎵 開音樂</button>
+      <button id="newGame" class="common-control">開始新遊戲 / 隨機換單字</button>
+      <button id="speakBtn" class="mode-control">🔊 唸題目</button>
+      <button id="nextBtn" class="mode-control" disabled>下一題</button>
+    </section>
+
+    <section class="game-card">
+      <div class="question-area">
+        <div>
+          <div class="word-box">
+            <div>
+              <div class="prompt-label">這個英文是什麼意思？</div>
+              <div id="word" class="word">word</div>
+              <div id="kk" class="kk">[kk]</div>
+              <div class="speak-row">
+                <button id="speakBtn2" class="speaker">🔊 再聽一次</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="options" class="options"></div>
+          <div id="specialGame" class="special-game" hidden></div>
+          <div id="message" class="message">選一個中文答案！</div>
+          <div class="progress"><div id="bar" class="bar"></div></div>
+        </div>
+
+        <div class="buddy-wrap">
+          <div id="speech" class="speech">我幫你加油！</div>
+          <div id="buddy" class="buddy-stage thinking" data-character="lion"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrong-panel">
+      <h2>本局錯誤記錄</h2>
+      <p>每局開始時這裡是空的。答錯會先在背景記錄，不會立刻顯示答案；該題答對後才顯示在本局錯題。每累積 3 次錯誤扣 5 分。</p>
+      <div id="wrongList" class="wrong-list"></div>
+    </section>
+
+
+    <div id="finishCelebration" class="finish-celebration" aria-hidden="true">
+      <div class="confetti-layer" id="confettiLayer"></div>
+      <div class="finish-card">
+        <div class="finish-trophy" id="finishTrophy">🏆</div>
+        <div class="finish-title" id="finishTitle">完成！</div>
+        <div class="finish-summary" id="finishSummary"></div>
+        <div class="finish-stars" id="finishStars"></div>
+        <div class="finish-actions">
+          <button type="button" id="finishAgain">再玩一次</button>
+          <button type="button" id="finishClose">關閉</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="reward" class="reward">
+      <div class="reward-card">
+        <div id="rewardEmoji" class="reward-emoji">⭐</div>
+        <div id="rewardText" class="reward-text">Good Job!</div>
+        <div id="rewardStars" class="reward-stars">★★★</div>
+      </div>
+    </div>
+
+    <p class="footer">
+      規則：可切換五選一、翻牌、打亂拼字、自然發音、句子填空；Week 可獨立選擇。五選一保留英選中 / 中選英與錯題優先機制；背景音樂、音量及角色設定共用。
+    </p>
+  </main>
+  <script>
+// Word Quest 單字庫
+// 原始單字庫 + Grade 2B Intensive Course 照片單字
+// 格式：{ id, en, kk, zh, week, section, source }
+// week=0 代表原始複習單字庫；照片單字依 Week 1~18（照片沒有 Week 14）。
+// id 不可重複；en 是英文；kk 可留空；zh 是中文選項文字。
+
+const LEGACY_WORD_QUEST_WORD_BANK = [
+{ id: "blanket", en: "blanket", kk: "[ˋblæŋkɪt]", zh: "毯子" },
+  { id: "blend", en: "blend", kk: "[blɛnd]", zh: "混合" },
+  { id: "blink", en: "blink", kk: "[blɪŋk]", zh: "眨眼" },
+  { id: "block", en: "block", kk: "[blɑk]", zh: "積木；街區；阻擋" },
+  { id: "burned", en: "burned", kk: "[bɝnd]", zh: "燒傷；燒焦" },
+  { id: "city", en: "city", kk: "[ˋsɪtɪ]", zh: "城市" },
+  { id: "flute", en: "flute", kk: "[flut]", zh: "長笛" },
+  { id: "gate", en: "gate", kk: "[get]", zh: "大門" },
+  { id: "glad", en: "glad", kk: "[glæd]", zh: "高興的" },
+  { id: "grand", en: "grand", kk: "[grænd]", zh: "宏偉的；大的" },
+  { id: "grave", en: "grave", kk: "[grev]", zh: "墳墓" },
+  { id: "grow", en: "grow", kk: "[gro]", zh: "成長；種植" },
+  { id: "home", en: "home", kk: "[hom]", zh: "家" },
+  { id: "lunch", en: "lunch", kk: "[lʌntʃ]", zh: "午餐" },
+  { id: "mend", en: "mend", kk: "[mɛnd]", zh: "修補" },
+  { id: "mess", en: "mess", kk: "[mɛs]", zh: "髒亂；混亂" },
+  { id: "must", en: "must", kk: "[mʌst]", zh: "必須" },
+  { id: "prune", en: "prune", kk: "[prun]", zh: "西梅乾；李子乾" },
+  { id: "rush", en: "rush", kk: "[rʌʃ]", zh: "衝；匆忙" },
+  { id: "send", en: "send", kk: "[sɛnd]", zh: "寄送；傳送" },
+  { id: "skip", en: "skip", kk: "[skɪp]", zh: "跳過；蹦跳" },
+  { id: "smile", en: "smile", kk: "[smaɪl]", zh: "微笑" },
+  { id: "smoke", en: "smoke", kk: "[smok]", zh: "冒煙；吸菸" },
+  { id: "stamp", en: "stamp", kk: "[stæmp]", zh: "郵票；印章" },
+  { id: "sting", en: "sting", kk: "[stɪŋ]", zh: "刺；螫" },
+  { id: "stove", en: "stove", kk: "[stov]", zh: "爐子" },
+  { id: "stuck", en: "stuck", kk: "[stʌk]", zh: "卡住；困住" },
+  { id: "test", en: "test", kk: "[tɛst]", zh: "測驗" },
+  { id: "train", en: "train", kk: "[tren]", zh: "訓練" },
+  { id: "trim", en: "trim", kk: "[trɪm]", zh: "修剪" },
+  { id: "at_last", en: "at last", kk: "[æt læst]", zh: "最後；終於" },
+  { id: "close_adj", en: "close", kk: "[klos]", zh: "親近的；靠近的" },
+  { id: "delighted", en: "delighted", kk: "[dɪˋlaɪtɪd]", zh: "高興的；欣喜的" },
+  { id: "evergreen", en: "evergreen", kk: "[ˋɛvɚˌgrin]", zh: "常綠的" },
+  { id: "first", en: "first", kk: "[fɝst]", zh: "第一的" },
+  { id: "float", en: "float", kk: "[flot]", zh: "漂浮" },
+  { id: "growled", en: "growled", kk: "[graʊld]", zh: "低吼；咆哮" },
+  { id: "idea", en: "idea", kk: "[aɪˋdiə]", zh: "想法；主意" },
+  { id: "plan", en: "plan", kk: "[plæn]", zh: "計畫；計畫做" },
+  { id: "kitchen", en: "kitchen", kk: "[ˋkɪtʃən]", zh: "廚房" },
+  { id: "land", en: "land", kk: "[lænd]", zh: "著陸；降落" },
+  { id: "learn", en: "learn", kk: "[lɝn]", zh: "學習" },
+  { id: "lesson", en: "lesson", kk: "[ˋlɛsən]", zh: "課；課程" },
+  { id: "proud_of", en: "proud of", kk: "[praʊd ʌv]", zh: "以……為榮" },
+  { id: "sniff", en: "sniff", kk: "[snɪf]", zh: "聞一聞；嗅" },
+  { id: "stream", en: "stream", kk: "[strim]", zh: "小溪；溪流" },
+  { id: "sweep", en: "sweep", kk: "[swip]", zh: "打掃；掃" },
+  { id: "weed", en: "weed", kk: "[wid]", zh: "雜草" },
+  { id: "wonderful", en: "wonderful", kk: "[ˋwʌndɚfəl]", zh: "很棒的；美妙的" },
+  { id: "muddy", en: "muddy", kk: "[ˋmʌdɪ]", zh: "泥巴的；泥濘的" },
+  { id: "important", en: "important", kk: "[ɪmˋpɔrtṇt]", zh: "重要的" },
+  { id: "belong", en: "belong", kk: "[bɪˋlɔŋ]", zh: "屬於" },
+  { id: "shook", en: "shook", kk: "[ʃʊk]", zh: "搖動；震動" },
+  { id: "understand", en: "understand", kk: "[ˌʌndɚˋstænd]", zh: "了解；明白" },
+  { id: "alone", en: "alone", kk: "[əˋlon]", zh: "獨自；單獨" },
+  { id: "cost", en: "cost", kk: "[kɔst]", zh: "花費" },
+  { id: "spend", en: "spend", kk: "[spɛnd]", zh: "花費；度過" }
+].map(w => ({ ...w, week: 0, section: "Original Review", source: "legacy" }));
+
+const GRADE_2B_PHOTO_WORDS = [
+  {"id": "w01_bank", "en": "bank", "kk": "", "zh": "銀行；河岸", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_camp", "en": "camp", "kk": "", "zh": "營地；露營", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_hand", "en": "hand", "kk": "", "zh": "手", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_paint", "en": "paint", "kk": "", "zh": "油漆；畫", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_plant", "en": "plant", "kk": "", "zh": "植物；種植", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_pond", "en": "pond", "kk": "", "zh": "池塘", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_pump", "en": "pump", "kk": "", "zh": "幫浦；抽水", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_stamp", "en": "stamp", "kk": "", "zh": "郵票；印章", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_stand", "en": "stand", "kk": "", "zh": "站立", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_stump", "en": "stump", "kk": "", "zh": "樹樁", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_wind", "en": "wind", "kk": "", "zh": "風", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_wink", "en": "wink", "kk": "", "zh": "眨眼", "week": 1, "section": "Phonics", "source": "photo"},
+  {"id": "w01_hungry", "en": "hungry", "kk": "", "zh": "飢餓的", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_lapping", "en": "lapping", "kk": "", "zh": "舔食；舔著喝", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_milk", "en": "milk", "kk": "", "zh": "牛奶", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_quiet", "en": "quiet", "kk": "", "zh": "安靜的", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_television", "en": "television", "kk": "", "zh": "電視", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_backyard", "en": "backyard", "kk": "", "zh": "後院", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_basement", "en": "basement", "kk": "", "zh": "地下室", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_clean", "en": "clean", "kk": "", "zh": "乾淨的；清理", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_fly_up", "en": "fly up", "kk": "", "zh": "飛上去", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_keep_away", "en": "keep-away", "kk": "", "zh": "不讓別人碰到的遊戲", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_near", "en": "near", "kk": "", "zh": "靠近；附近", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w01_upstairs", "en": "upstairs", "kk": "", "zh": "樓上", "week": 1, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_belt", "en": "belt", "kk": "", "zh": "皮帶", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_elf", "en": "elf", "kk": "", "zh": "小精靈", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_gift", "en": "gift", "kk": "", "zh": "禮物", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_golf", "en": "golf", "kk": "", "zh": "高爾夫球", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_left", "en": "left", "kk": "", "zh": "左邊；離開", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_lift", "en": "lift", "kk": "", "zh": "舉起；電梯", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_melt", "en": "melt", "kk": "", "zh": "融化", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_quilt", "en": "quilt", "kk": "", "zh": "拼布被", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_raft", "en": "raft", "kk": "", "zh": "木筏", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_shelf", "en": "shelf", "kk": "", "zh": "架子", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_wilt", "en": "wilt", "kk": "", "zh": "枯萎", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_wolf", "en": "wolf", "kk": "", "zh": "狼", "week": 2, "section": "Phonics", "source": "photo"},
+  {"id": "w02_came", "en": "came", "kk": "", "zh": "來了（come 的過去式）", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_bait", "en": "bait", "kk": "", "zh": "誘餌", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_rake", "en": "rake", "kk": "", "zh": "耙子；耙", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_hay", "en": "hay", "kk": "", "zh": "乾草", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_plate", "en": "plate", "kk": "", "zh": "盤子", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_pail", "en": "pail", "kk": "", "zh": "桶子", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_cane", "en": "cane", "kk": "", "zh": "手杖", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_raise", "en": "raise", "kk": "", "zh": "舉起；提高", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_grape", "en": "grape", "kk": "", "zh": "葡萄", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_say", "en": "say", "kk": "", "zh": "說", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_aid", "en": "aid", "kk": "", "zh": "幫助", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_pain", "en": "pain", "kk": "", "zh": "疼痛", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_trail", "en": "trail", "kk": "", "zh": "小徑；蹤跡", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_stain", "en": "stain", "kk": "", "zh": "污漬", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_blaze", "en": "blaze", "kk": "", "zh": "火焰；燃燒", "week": 2, "section": "Spelling", "source": "photo"},
+  {"id": "w02_almost", "en": "almost", "kk": "", "zh": "幾乎", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_dishes", "en": "dishes", "kk": "", "zh": "餐具；盤子", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_everyone", "en": "everyone", "kk": "", "zh": "每個人", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_family", "en": "family", "kk": "", "zh": "家庭", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_later", "en": "later", "kk": "", "zh": "稍後", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_soup", "en": "soup", "kk": "", "zh": "湯", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_still", "en": "still", "kk": "", "zh": "仍然；靜止的", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_together", "en": "together", "kk": "", "zh": "一起", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_window", "en": "window", "kk": "", "zh": "窗戶", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_children", "en": "children", "kk": "", "zh": "孩子們", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_collar", "en": "collar", "kk": "", "zh": "衣領；項圈", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_heel", "en": "heel", "kk": "", "zh": "腳跟", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_hurt", "en": "hurt", "kk": "", "zh": "受傷；疼痛", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_in_front_of", "en": "in front of", "kk": "", "zh": "在……前面", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_lean", "en": "lean", "kk": "", "zh": "傾斜；靠", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_pet_store", "en": "pet store", "kk": "", "zh": "寵物店", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w02_snort", "en": "snort", "kk": "", "zh": "哼氣；噴鼻息", "week": 2, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_scrape", "en": "scrape", "kk": "", "zh": "刮；擦傷", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_scratch", "en": "scratch", "kk": "", "zh": "抓；刮痕", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_screen", "en": "screen", "kk": "", "zh": "螢幕；屏幕", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_scrub", "en": "scrub", "kk": "", "zh": "用力刷洗", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_splash", "en": "splash", "kk": "", "zh": "濺水；飛濺", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_split", "en": "split", "kk": "", "zh": "分開；裂開", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_sprain", "en": "sprain", "kk": "", "zh": "扭傷", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_spray", "en": "spray", "kk": "", "zh": "噴灑", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_spring", "en": "spring", "kk": "", "zh": "春天；彈跳", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_strap", "en": "strap", "kk": "", "zh": "帶子", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_stripes", "en": "stripes", "kk": "", "zh": "條紋", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_strong", "en": "strong", "kk": "", "zh": "強壯的", "week": 3, "section": "Phonics", "source": "photo"},
+  {"id": "w03_deep", "en": "deep", "kk": "", "zh": "深的", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_meal", "en": "meal", "kk": "", "zh": "一餐", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_sheep", "en": "sheep", "kk": "", "zh": "綿羊", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_each", "en": "each", "kk": "", "zh": "每一個", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_wheel", "en": "wheel", "kk": "", "zh": "輪子", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_treat", "en": "treat", "kk": "", "zh": "對待；款待", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_bean", "en": "bean", "kk": "", "zh": "豆子", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_seen", "en": "seen", "kk": "", "zh": "看見過", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_team", "en": "team", "kk": "", "zh": "隊伍", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_dream", "en": "dream", "kk": "", "zh": "夢", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_mean", "en": "mean", "kk": "", "zh": "意思是；刻薄的", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_leave", "en": "leave", "kk": "", "zh": "離開", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_cream", "en": "cream", "kk": "", "zh": "奶油；乳霜", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_sleep", "en": "sleep", "kk": "", "zh": "睡覺", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_sneeze", "en": "sneeze", "kk": "", "zh": "打噴嚏", "week": 3, "section": "Spelling", "source": "photo"},
+  {"id": "w03_copies", "en": "copies", "kk": "", "zh": "副本；份數", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_enough", "en": "enough", "kk": "", "zh": "足夠的", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_library", "en": "library", "kk": "", "zh": "圖書館", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_number", "en": "number", "kk": "", "zh": "數字；數量", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_prizes", "en": "prizes", "kk": "", "zh": "獎品", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_ribbon", "en": "ribbon", "kk": "", "zh": "緞帶", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_ring", "en": "ring", "kk": "", "zh": "戒指；環", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_rope", "en": "rope", "kk": "", "zh": "繩子", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_sign", "en": "sign", "kk": "", "zh": "標誌；招牌", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_tonight", "en": "tonight", "kk": "", "zh": "今晚", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_happen", "en": "happen", "kk": "", "zh": "發生", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_miss", "en": "miss", "kk": "", "zh": "想念；錯過", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_nice", "en": "nice", "kk": "", "zh": "好的；友善的", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_steps", "en": "steps", "kk": "", "zh": "步驟；階梯", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w03_terrible", "en": "terrible", "kk": "", "zh": "糟糕的；可怕的", "week": 3, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_knee", "en": "knee", "kk": "", "zh": "膝蓋", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_kneel", "en": "kneel", "kk": "", "zh": "跪下", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_knife", "en": "knife", "kk": "", "zh": "刀子", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_knit", "en": "knit", "kk": "", "zh": "編織", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_knob", "en": "knob", "kk": "", "zh": "旋鈕；門把", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_knock", "en": "knock", "kk": "", "zh": "敲", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_knot", "en": "knot", "kk": "", "zh": "結", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_wrap", "en": "wrap", "kk": "", "zh": "包裹", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_wreath", "en": "wreath", "kk": "", "zh": "花環", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_wrench", "en": "wrench", "kk": "", "zh": "扳手", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_wrist", "en": "wrist", "kk": "", "zh": "手腕", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_write", "en": "write", "kk": "", "zh": "寫", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_wrong", "en": "wrong", "kk": "", "zh": "錯的", "week": 4, "section": "Phonics", "source": "photo"},
+  {"id": "w04_shy", "en": "shy", "kk": "", "zh": "害羞的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_right", "en": "right", "kk": "", "zh": "右邊；正確的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_wide", "en": "wide", "kk": "", "zh": "寬的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_light", "en": "light", "kk": "", "zh": "光；輕的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_pine", "en": "pine", "kk": "", "zh": "松樹", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_fight", "en": "fight", "kk": "", "zh": "打架；戰鬥", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_fly", "en": "fly", "kk": "", "zh": "飛", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_night", "en": "night", "kk": "", "zh": "夜晚", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_dry", "en": "dry", "kk": "", "zh": "乾的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_sight", "en": "sight", "kk": "", "zh": "視力；景象", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_might", "en": "might", "kk": "", "zh": "可能；力量", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_tight", "en": "tight", "kk": "", "zh": "緊的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_stripe", "en": "stripe", "kk": "", "zh": "條紋", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_sly", "en": "sly", "kk": "", "zh": "狡猾的", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_cry", "en": "cry", "kk": "", "zh": "哭", "week": 4, "section": "Spelling", "source": "photo"},
+  {"id": "w04_basket", "en": "basket", "kk": "", "zh": "籃子", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_bend_down", "en": "bend down", "kk": "", "zh": "彎下去", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_kind", "en": "kind", "kk": "", "zh": "親切的；種類", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_wave", "en": "wave", "kk": "", "zh": "揮手；波浪", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_enter", "en": "enter", "kk": "", "zh": "進入", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_never", "en": "never", "kk": "", "zh": "從不", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_picture", "en": "picture", "kk": "", "zh": "圖片", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_proud", "en": "proud", "kk": "", "zh": "驕傲的", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_shiny", "en": "shiny", "kk": "", "zh": "閃亮的", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w04_spray", "en": "spray", "kk": "", "zh": "噴灑", "week": 4, "section": "Reading Plus", "source": "photo"},
+  {"id": "w05_brick", "en": "brick", "kk": "", "zh": "磚塊", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_check", "en": "check", "kk": "", "zh": "檢查", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_chick", "en": "chick", "kk": "", "zh": "小雞", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_clock", "en": "clock", "kk": "", "zh": "時鐘", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_duck", "en": "duck", "kk": "", "zh": "鴨子", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_lock", "en": "lock", "kk": "", "zh": "鎖；鎖上", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_pocket", "en": "pocket", "kk": "", "zh": "口袋", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_rack", "en": "rack", "kk": "", "zh": "架子", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_rock", "en": "rock", "kk": "", "zh": "岩石；搖動", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_rocket", "en": "rocket", "kk": "", "zh": "火箭", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_snack", "en": "snack", "kk": "", "zh": "點心", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_thick", "en": "thick", "kk": "", "zh": "厚的", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_track", "en": "track", "kk": "", "zh": "軌道；追蹤", "week": 5, "section": "Phonics", "source": "photo"},
+  {"id": "w05_poke", "en": "poke", "kk": "", "zh": "戳", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_boat", "en": "boat", "kk": "", "zh": "船", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_row", "en": "row", "kk": "", "zh": "一排；划船", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_goat", "en": "goat", "kk": "", "zh": "山羊", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_snow", "en": "snow", "kk": "", "zh": "雪", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_toad", "en": "toad", "kk": "", "zh": "蟾蜍", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_soap", "en": "soap", "kk": "", "zh": "肥皂", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_blow", "en": "blow", "kk": "", "zh": "吹", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_coat", "en": "coat", "kk": "", "zh": "外套", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_tow", "en": "tow", "kk": "", "zh": "拖拉", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_coach", "en": "coach", "kk": "", "zh": "教練；長途巴士", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_float", "en": "float", "kk": "", "zh": "漂浮", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_toast", "en": "toast", "kk": "", "zh": "吐司；烘烤", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_slow", "en": "slow", "kk": "", "zh": "慢的", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_globe", "en": "globe", "kk": "", "zh": "地球儀", "week": 5, "section": "Spelling", "source": "photo"},
+  {"id": "w05_at_once", "en": "at once", "kk": "", "zh": "立刻", "week": 5, "section": "Reading Plus", "source": "photo"},
+  {"id": "w05_dog_toys", "en": "dog toys", "kk": "", "zh": "狗玩具", "week": 5, "section": "Reading Plus", "source": "photo"},
+  {"id": "w05_guess", "en": "guess", "kk": "", "zh": "猜", "week": 5, "section": "Reading Plus", "source": "photo"},
+  {"id": "w05_inside", "en": "inside", "kk": "", "zh": "裡面", "week": 5, "section": "Reading Plus", "source": "photo"},
+  {"id": "w05_judge", "en": "judge", "kk": "", "zh": "判斷；法官", "week": 5, "section": "Reading Plus", "source": "photo"},
+  {"id": "w05_place", "en": "place", "kk": "", "zh": "地方；放置", "week": 5, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_bright", "en": "bright", "kk": "", "zh": "明亮的；聰明的", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_caught", "en": "caught", "kk": "", "zh": "抓到；接到", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_eight", "en": "eight", "kk": "", "zh": "八", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_flight", "en": "flight", "kk": "", "zh": "飛行", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_high", "en": "high", "kk": "", "zh": "高的", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_knight", "en": "knight", "kk": "", "zh": "騎士", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_light", "en": "light", "kk": "", "zh": "光；輕的", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_night", "en": "night", "kk": "", "zh": "夜晚", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_right", "en": "right", "kk": "", "zh": "右邊；正確的", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_sigh", "en": "sigh", "kk": "", "zh": "嘆氣", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_sight", "en": "sight", "kk": "", "zh": "視力；景象", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_straight", "en": "straight", "kk": "", "zh": "直的；直接地", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_tight", "en": "tight", "kk": "", "zh": "緊的", "week": 6, "section": "Phonics", "source": "photo"},
+  {"id": "w06_tune", "en": "tune", "kk": "", "zh": "曲調", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_moon", "en": "moon", "kk": "", "zh": "月亮", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_pool", "en": "pool", "kk": "", "zh": "水池", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_zoo", "en": "zoo", "kk": "", "zh": "動物園", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_rude", "en": "rude", "kk": "", "zh": "粗魯的", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_soon", "en": "soon", "kk": "", "zh": "很快", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_boot", "en": "boot", "kk": "", "zh": "靴子", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_food", "en": "food", "kk": "", "zh": "食物", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_tube", "en": "tube", "kk": "", "zh": "管子", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_room", "en": "room", "kk": "", "zh": "房間", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_moose", "en": "moose", "kk": "", "zh": "駝鹿", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_goose", "en": "goose", "kk": "", "zh": "鵝", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_zoom", "en": "zoom", "kk": "", "zh": "快速移動；放大", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_balloon", "en": "balloon", "kk": "", "zh": "氣球", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_shoot", "en": "shoot", "kk": "", "zh": "射擊；拍攝", "week": 6, "section": "Spelling", "source": "photo"},
+  {"id": "w06_a_can_of", "en": "a can of", "kk": "", "zh": "一罐……", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_enter", "en": "enter", "kk": "", "zh": "進入", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_first", "en": "first", "kk": "", "zh": "第一；首先", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_glitter", "en": "glitter", "kk": "", "zh": "閃光；亮粉", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_gold", "en": "gold", "kk": "", "zh": "金；金色", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_prizes", "en": "prizes", "kk": "", "zh": "獎品", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_second", "en": "second", "kk": "", "zh": "第二", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_sign_up", "en": "sign up", "kk": "", "zh": "報名", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_surely", "en": "surely", "kk": "", "zh": "當然；一定", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_third", "en": "third", "kk": "", "zh": "第三", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_look_at", "en": "look at", "kk": "", "zh": "看", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_no_cost", "en": "no cost", "kk": "", "zh": "免費；沒有費用", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_nod", "en": "nod", "kk": "", "zh": "點頭", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_paste", "en": "paste", "kk": "", "zh": "黏貼；漿糊", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w06_permission", "en": "permission", "kk": "", "zh": "允許；許可", "week": 6, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_basement", "en": "basement", "kk": "", "zh": "地下室", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_bright_eyed", "en": "bright-eyed", "kk": "", "zh": "眼睛明亮的", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_lean", "en": "lean", "kk": "", "zh": "傾斜；靠", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_past", "en": "past", "kk": "", "zh": "過去；經過", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_wrong", "en": "wrong", "kk": "", "zh": "錯的", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_remember", "en": "remember", "kk": "", "zh": "記得", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_clap", "en": "clap", "kk": "", "zh": "拍手", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_crowd", "en": "crowd", "kk": "", "zh": "人群", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_hug", "en": "hug", "kk": "", "zh": "擁抱", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_nervous", "en": "nervous", "kk": "", "zh": "緊張的", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_people", "en": "people", "kk": "", "zh": "人們", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w07_ring", "en": "ring", "kk": "", "zh": "戒指；環", "week": 7, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_different", "en": "different", "kk": "", "zh": "不同的", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_hold_up", "en": "hold up", "kk": "", "zh": "舉起；支撐", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_lay_down", "en": "lay down", "kk": "", "zh": "放下；躺下", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_other", "en": "other", "kk": "", "zh": "其他的", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_racehorse", "en": "racehorse", "kk": "", "zh": "賽馬", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_win", "en": "win", "kk": "", "zh": "贏", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w08_winner", "en": "winner", "kk": "", "zh": "贏家", "week": 8, "section": "Reading Plus", "source": "photo"},
+  {"id": "w09_what", "en": "what", "kk": "", "zh": "什麼", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_clash", "en": "clash", "kk": "", "zh": "衝突；碰撞", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_shock", "en": "shock", "kk": "", "zh": "震驚；衝擊", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_while", "en": "while", "kk": "", "zh": "當……時；一會兒", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_shame", "en": "shame", "kk": "", "zh": "羞恥；可惜", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_flash", "en": "flash", "kk": "", "zh": "閃光；閃現", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_where", "en": "where", "kk": "", "zh": "哪裡", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_shine", "en": "shine", "kk": "", "zh": "發光", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_why", "en": "why", "kk": "", "zh": "為什麼", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_shore", "en": "shore", "kk": "", "zh": "岸邊", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_shall", "en": "shall", "kk": "", "zh": "將；應該", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_share", "en": "share", "kk": "", "zh": "分享", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_shadow", "en": "shadow", "kk": "", "zh": "影子", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_whisper", "en": "whisper", "kk": "", "zh": "低聲說；耳語", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w09_whiskers", "en": "whiskers", "kk": "", "zh": "鬍鬚", "week": 9, "section": "Spelling", "source": "photo"},
+  {"id": "w10_braid", "en": "braid", "kk": "", "zh": "辮子；編辮子", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_chain", "en": "chain", "kk": "", "zh": "鏈子", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_hay", "en": "hay", "kk": "", "zh": "乾草", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_mail", "en": "mail", "kk": "", "zh": "郵件", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_pail", "en": "pail", "kk": "", "zh": "桶子", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_paint", "en": "paint", "kk": "", "zh": "油漆；畫", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_pay", "en": "pay", "kk": "", "zh": "付款", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_rain", "en": "rain", "kk": "", "zh": "雨", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_sail", "en": "sail", "kk": "", "zh": "航行；帆", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_stain", "en": "stain", "kk": "", "zh": "污漬", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_train", "en": "train", "kk": "", "zh": "火車；訓練", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_tray", "en": "tray", "kk": "", "zh": "托盤", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_beads", "en": "beads", "kk": "", "zh": "珠子", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_bean", "en": "bean", "kk": "", "zh": "豆子", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_beef", "en": "beef", "kk": "", "zh": "牛肉", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_bread", "en": "bread", "kk": "", "zh": "麵包", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_head", "en": "head", "kk": "", "zh": "頭", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_heel", "en": "heel", "kk": "", "zh": "腳跟", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_leaf", "en": "leaf", "kk": "", "zh": "葉子", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_screen", "en": "screen", "kk": "", "zh": "螢幕；屏幕", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_seat", "en": "seat", "kk": "", "zh": "座位", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_steam", "en": "steam", "kk": "", "zh": "蒸氣", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_thread", "en": "thread", "kk": "", "zh": "線", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_tree", "en": "tree", "kk": "", "zh": "樹", "week": 10, "section": "Phonics", "source": "photo"},
+  {"id": "w10_climb", "en": "climb", "kk": "", "zh": "爬", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_myself", "en": "myself", "kk": "", "zh": "我自己", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_practice", "en": "practice", "kk": "", "zh": "練習", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_track", "en": "track", "kk": "", "zh": "軌道；追蹤", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_uncle", "en": "uncle", "kk": "", "zh": "叔叔；舅舅", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_whiskers", "en": "whiskers", "kk": "", "zh": "鬍鬚", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_wrote", "en": "wrote", "kk": "", "zh": "寫了（write 的過去式）", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_clover", "en": "clover", "kk": "", "zh": "三葉草", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_danger", "en": "danger", "kk": "", "zh": "危險", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_field", "en": "field", "kk": "", "zh": "田野；場地", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_noise", "en": "noise", "kk": "", "zh": "噪音", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_pass", "en": "pass", "kk": "", "zh": "通過；傳遞", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_rest", "en": "rest", "kk": "", "zh": "休息", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_rumble", "en": "rumble", "kk": "", "zh": "隆隆聲", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_sky", "en": "sky", "kk": "", "zh": "天空", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w10_thunder", "en": "thunder", "kk": "", "zh": "雷聲", "week": 10, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_blow", "en": "blow", "kk": "", "zh": "吹", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_bowl", "en": "bowl", "kk": "", "zh": "碗", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_crow", "en": "crow", "kk": "", "zh": "烏鴉", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_goat", "en": "goat", "kk": "", "zh": "山羊", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_pillow", "en": "pillow", "kk": "", "zh": "枕頭", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_road", "en": "road", "kk": "", "zh": "道路", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_snow", "en": "snow", "kk": "", "zh": "雪", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_soap", "en": "soap", "kk": "", "zh": "肥皂", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_throw", "en": "throw", "kk": "", "zh": "丟；投擲", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_toad", "en": "toad", "kk": "", "zh": "蟾蜍", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_toast", "en": "toast", "kk": "", "zh": "吐司；烘烤", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_window", "en": "window", "kk": "", "zh": "窗戶", "week": 11, "section": "Phonics", "source": "photo"},
+  {"id": "w11_bath", "en": "bath", "kk": "", "zh": "洗澡；浴缸", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_peach", "en": "peach", "kk": "", "zh": "桃子", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_tooth", "en": "tooth", "kk": "", "zh": "牙齒", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_thin", "en": "thin", "kk": "", "zh": "薄的；瘦的", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_choke", "en": "choke", "kk": "", "zh": "噎住", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_much", "en": "much", "kk": "", "zh": "很多", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_with", "en": "with", "kk": "", "zh": "和；跟", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_chick", "en": "chick", "kk": "", "zh": "小雞", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_teach", "en": "teach", "kk": "", "zh": "教", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_thank", "en": "thank", "kk": "", "zh": "感謝", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_child", "en": "child", "kk": "", "zh": "孩子", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_chore", "en": "chore", "kk": "", "zh": "家事", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_reach", "en": "reach", "kk": "", "zh": "到達；伸手", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_thick", "en": "thick", "kk": "", "zh": "厚的", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_think", "en": "think", "kk": "", "zh": "想；思考", "week": 11, "section": "Spelling", "source": "photo"},
+  {"id": "w11_carrot", "en": "carrot", "kk": "", "zh": "胡蘿蔔", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_cool", "en": "cool", "kk": "", "zh": "涼爽的；很棒的", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_gloves", "en": "gloves", "kk": "", "zh": "手套", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_haircut", "en": "haircut", "kk": "", "zh": "理髮；髮型", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_patch", "en": "patch", "kk": "", "zh": "補丁；小塊地", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_pond", "en": "pond", "kk": "", "zh": "池塘", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_spring", "en": "spring", "kk": "", "zh": "春天；彈跳", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_voice", "en": "voice", "kk": "", "zh": "聲音", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_wool", "en": "wool", "kk": "", "zh": "羊毛", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_acorn", "en": "acorn", "kk": "", "zh": "橡實", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_angry", "en": "angry", "kk": "", "zh": "生氣的", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_as_fast_as", "en": "as fast as", "kk": "", "zh": "和……一樣快", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_bless", "en": "bless", "kk": "", "zh": "祝福", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_chattering", "en": "chattering", "kk": "", "zh": "喋喋不休；顫動", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_dig", "en": "dig", "kk": "", "zh": "挖", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_hill", "en": "hill", "kk": "", "zh": "小山", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_oak", "en": "oak", "kk": "", "zh": "橡樹", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_squirrel", "en": "squirrel", "kk": "", "zh": "松鼠", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_thief", "en": "thief", "kk": "", "zh": "小偷", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w11_tiny", "en": "tiny", "kk": "", "zh": "很小的", "week": 11, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_boot", "en": "boot", "kk": "", "zh": "靴子", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_cook", "en": "cook", "kk": "", "zh": "煮；廚師", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_hood", "en": "hood", "kk": "", "zh": "兜帽", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_hook", "en": "hook", "kk": "", "zh": "鉤子", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_hoop", "en": "hoop", "kk": "", "zh": "圓環", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_moose", "en": "moose", "kk": "", "zh": "駝鹿", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_pool", "en": "pool", "kk": "", "zh": "水池", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_school", "en": "school", "kk": "", "zh": "學校", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_shook", "en": "shook", "kk": "", "zh": "搖了（shake 的過去式）", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_spoon", "en": "spoon", "kk": "", "zh": "湯匙", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_stood", "en": "stood", "kk": "", "zh": "站著（stand 的過去式）", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_stool", "en": "stool", "kk": "", "zh": "凳子", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_cause", "en": "cause", "kk": "", "zh": "原因；造成", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_claw", "en": "claw", "kk": "", "zh": "爪子", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_crawl", "en": "crawl", "kk": "", "zh": "爬行", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_draw", "en": "draw", "kk": "", "zh": "畫；拉", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_faucet", "en": "faucet", "kk": "", "zh": "水龍頭", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_fawn", "en": "fawn", "kk": "", "zh": "小鹿", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_laundry", "en": "laundry", "kk": "", "zh": "洗衣物", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_paw", "en": "paw", "kk": "", "zh": "動物的腳掌", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_sauce", "en": "sauce", "kk": "", "zh": "醬汁", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_shawl", "en": "shawl", "kk": "", "zh": "披肩", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_straw", "en": "straw", "kk": "", "zh": "吸管；稻草", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_yawn", "en": "yawn", "kk": "", "zh": "打哈欠", "week": 12, "section": "Phonics", "source": "photo"},
+  {"id": "w12_behind", "en": "behind", "kk": "", "zh": "在……後面", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_berry", "en": "berry", "kk": "", "zh": "莓果", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_branches", "en": "branches", "kk": "", "zh": "樹枝", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_bushy_tail", "en": "bushy tail", "kk": "", "zh": "蓬鬆的尾巴", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_dance", "en": "dance", "kk": "", "zh": "跳舞", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_flag", "en": "flag", "kk": "", "zh": "旗子", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_insect", "en": "insect", "kk": "", "zh": "昆蟲", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_quick", "en": "quick", "kk": "", "zh": "快速的", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_skunk", "en": "skunk", "kk": "", "zh": "臭鼬", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w12_suddenly", "en": "suddenly", "kk": "", "zh": "突然地", "week": 12, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_blew", "en": "blew", "kk": "", "zh": "吹了（blow 的過去式）", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_chew", "en": "chew", "kk": "", "zh": "咀嚼", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_dew", "en": "dew", "kk": "", "zh": "露水", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_few", "en": "few", "kk": "", "zh": "少數；幾個", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_flew", "en": "flew", "kk": "", "zh": "飛了（fly 的過去式）", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_grew", "en": "grew", "kk": "", "zh": "成長了（grow 的過去式）", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_jewelry", "en": "jewelry", "kk": "", "zh": "珠寶", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_mew", "en": "mew", "kk": "", "zh": "貓叫聲", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_new", "en": "new", "kk": "", "zh": "新的", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_screw", "en": "screw", "kk": "", "zh": "螺絲；旋緊", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_stew", "en": "stew", "kk": "", "zh": "燉菜；燉煮", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_threw", "en": "threw", "kk": "", "zh": "丟了（throw 的過去式）", "week": 13, "section": "Phonics", "source": "photo"},
+  {"id": "w13_art", "en": "art", "kk": "", "zh": "藝術", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_yard", "en": "yard", "kk": "", "zh": "院子", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_barn", "en": "barn", "kk": "", "zh": "穀倉", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_park", "en": "park", "kk": "", "zh": "公園", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_hard", "en": "hard", "kk": "", "zh": "困難的；硬的", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_cart", "en": "cart", "kk": "", "zh": "手推車", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_dark", "en": "dark", "kk": "", "zh": "黑暗的", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_farm", "en": "farm", "kk": "", "zh": "農場", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_shark", "en": "shark", "kk": "", "zh": "鯊魚", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_sharp", "en": "sharp", "kk": "", "zh": "尖銳的", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_harm", "en": "harm", "kk": "", "zh": "傷害", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_alarm", "en": "alarm", "kk": "", "zh": "警報", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_arms", "en": "arms", "kk": "", "zh": "手臂", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_march", "en": "march", "kk": "", "zh": "行進；三月", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_smart", "en": "smart", "kk": "", "zh": "聰明的", "week": 13, "section": "Spelling", "source": "photo"},
+  {"id": "w13_buzzing", "en": "buzzing", "kk": "", "zh": "嗡嗡作響", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_careful", "en": "careful", "kk": "", "zh": "小心的", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_fur", "en": "fur", "kk": "", "zh": "毛皮", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_hit", "en": "hit", "kk": "", "zh": "打；撞", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_hole", "en": "hole", "kk": "", "zh": "洞", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_honey", "en": "honey", "kk": "", "zh": "蜂蜜", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_lick", "en": "lick", "kk": "", "zh": "舔", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_path", "en": "path", "kk": "", "zh": "小路", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_sting", "en": "sting", "kk": "", "zh": "刺；螫", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_stuck", "en": "stuck", "kk": "", "zh": "卡住；困住", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_against", "en": "against", "kk": "", "zh": "靠著；反對", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_hardly", "en": "hardly", "kk": "", "zh": "幾乎不", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_meadow", "en": "meadow", "kk": "", "zh": "草地", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_middle", "en": "middle", "kk": "", "zh": "中間", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_pit_pat", "en": "pit-pat", "kk": "", "zh": "啪嗒啪嗒聲", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_space", "en": "space", "kk": "", "zh": "空間", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_toss", "en": "toss", "kk": "", "zh": "拋；扔", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_touch", "en": "touch", "kk": "", "zh": "觸碰", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w13_whistle", "en": "whistle", "kk": "", "zh": "吹口哨；哨子", "week": 13, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_baby", "en": "baby", "kk": "", "zh": "嬰兒", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_bunny", "en": "bunny", "kk": "", "zh": "兔子", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_city", "en": "city", "kk": "", "zh": "城市", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_cry", "en": "cry", "kk": "", "zh": "哭", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_dry", "en": "dry", "kk": "", "zh": "乾的", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_fly", "en": "fly", "kk": "", "zh": "飛", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_fry", "en": "fry", "kk": "", "zh": "油炸", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_happy", "en": "happy", "kk": "", "zh": "快樂的", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_party", "en": "party", "kk": "", "zh": "派對", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_pony", "en": "pony", "kk": "", "zh": "小馬", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_silly", "en": "silly", "kk": "", "zh": "傻的", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_sky", "en": "sky", "kk": "", "zh": "天空", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_story", "en": "story", "kk": "", "zh": "故事", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_chain", "en": "chain", "kk": "", "zh": "鏈子", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_chop", "en": "chop", "kk": "", "zh": "切；砍", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_shed", "en": "shed", "kk": "", "zh": "小屋；脫落", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_shelf", "en": "shelf", "kk": "", "zh": "架子", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_thick", "en": "thick", "kk": "", "zh": "厚的", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_thin", "en": "thin", "kk": "", "zh": "薄的；瘦的", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_think", "en": "think", "kk": "", "zh": "想；思考", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_thread", "en": "thread", "kk": "", "zh": "線", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_three", "en": "three", "kk": "", "zh": "三", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_throat", "en": "throat", "kk": "", "zh": "喉嚨", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_whale", "en": "whale", "kk": "", "zh": "鯨魚", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_wheel", "en": "wheel", "kk": "", "zh": "輪子", "week": 15, "section": "Phonics", "source": "photo"},
+  {"id": "w15_shines", "en": "shines", "kk": "", "zh": "發光", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_through", "en": "through", "kk": "", "zh": "穿過；透過", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_bouncing", "en": "bouncing", "kk": "", "zh": "彈跳", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_spider", "en": "spider", "kk": "", "zh": "蜘蛛", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_webs", "en": "webs", "kk": "", "zh": "蜘蛛網", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_woods", "en": "woods", "kk": "", "zh": "樹林", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_glass", "en": "glass", "kk": "", "zh": "玻璃", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_tied_together", "en": "tied together", "kk": "", "zh": "綁在一起", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_drop", "en": "drop", "kk": "", "zh": "掉落；滴", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_straight", "en": "straight", "kk": "", "zh": "直的；直接地", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_friendly", "en": "friendly", "kk": "", "zh": "友善的", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_bless", "en": "bless", "kk": "", "zh": "祝福", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_blink", "en": "blink", "kk": "", "zh": "眨眼", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_crawl", "en": "crawl", "kk": "", "zh": "爬行", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_flat", "en": "flat", "kk": "", "zh": "平的", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_follow", "en": "follow", "kk": "", "zh": "跟隨", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_join", "en": "join", "kk": "", "zh": "加入", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_rock", "en": "rock", "kk": "", "zh": "岩石；搖動", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_star", "en": "star", "kk": "", "zh": "星星", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w15_swish", "en": "swish", "kk": "", "zh": "嗖嗖聲；快速擺動", "week": 15, "section": "Reading Plus", "source": "photo"},
+  {"id": "w16_bath", "en": "bath", "kk": "", "zh": "洗澡；浴缸", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_bench", "en": "bench", "kk": "", "zh": "長椅", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_branch", "en": "branch", "kk": "", "zh": "樹枝", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_brush", "en": "brush", "kk": "", "zh": "刷子；刷", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_dish", "en": "dish", "kk": "", "zh": "盤子", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_ditch", "en": "ditch", "kk": "", "zh": "溝渠", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_path", "en": "path", "kk": "", "zh": "小路", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_ring", "en": "ring", "kk": "", "zh": "戒指；環", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_swing", "en": "swing", "kk": "", "zh": "鞦韆；擺動", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_switch", "en": "switch", "kk": "", "zh": "開關；切換", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_teeth", "en": "teeth", "kk": "", "zh": "牙齒（複數）", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_watch", "en": "watch", "kk": "", "zh": "手錶；觀看", "week": 16, "section": "Phonics", "source": "photo"},
+  {"id": "w16_bird", "en": "bird", "kk": "", "zh": "鳥", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_more", "en": "more", "kk": "", "zh": "更多", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_shirt", "en": "shirt", "kk": "", "zh": "襯衫", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_horse", "en": "horse", "kk": "", "zh": "馬", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_first", "en": "first", "kk": "", "zh": "第一；首先", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_for", "en": "for", "kk": "", "zh": "為了；給", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_girl", "en": "girl", "kk": "", "zh": "女孩", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_horn", "en": "horn", "kk": "", "zh": "角；喇叭", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_dirt", "en": "dirt", "kk": "", "zh": "泥土", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_short", "en": "short", "kk": "", "zh": "短的", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_store", "en": "store", "kk": "", "zh": "商店", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_morning", "en": "morning", "kk": "", "zh": "早上", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_dinosaur", "en": "dinosaur", "kk": "", "zh": "恐龍", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_third", "en": "third", "kk": "", "zh": "第三", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_whirl", "en": "whirl", "kk": "", "zh": "旋轉", "week": 16, "section": "Spelling", "source": "photo"},
+  {"id": "w16_appear", "en": "appear", "kk": "", "zh": "出現", "week": 16, "section": "Reading Plus", "source": "photo"},
+  {"id": "w16_decide", "en": "decide", "kk": "", "zh": "決定", "week": 16, "section": "Reading Plus", "source": "photo"},
+  {"id": "w16_furry", "en": "furry", "kk": "", "zh": "毛茸茸的", "week": 16, "section": "Reading Plus", "source": "photo"},
+  {"id": "w16_sister", "en": "sister", "kk": "", "zh": "姊妹", "week": 16, "section": "Reading Plus", "source": "photo"},
+  {"id": "w16_strange", "en": "strange", "kk": "", "zh": "奇怪的", "week": 16, "section": "Reading Plus", "source": "photo"},
+  {"id": "w16_tease", "en": "tease", "kk": "", "zh": "取笑；逗弄", "week": 16, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_barn", "en": "barn", "kk": "", "zh": "穀倉", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_card", "en": "card", "kk": "", "zh": "卡片", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_dart", "en": "dart", "kk": "", "zh": "飛鏢", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_fern", "en": "fern", "kk": "", "zh": "蕨類植物", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_harp", "en": "harp", "kk": "", "zh": "豎琴", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_ladder", "en": "ladder", "kk": "", "zh": "梯子", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_letter", "en": "letter", "kk": "", "zh": "字母；信", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_number", "en": "number", "kk": "", "zh": "數字；數量", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_paper", "en": "paper", "kk": "", "zh": "紙", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_shark", "en": "shark", "kk": "", "zh": "鯊魚", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_slipper", "en": "slipper", "kk": "", "zh": "拖鞋", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_water", "en": "water", "kk": "", "zh": "水", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_yard", "en": "yard", "kk": "", "zh": "院子", "week": 17, "section": "Phonics", "source": "photo"},
+  {"id": "w17_flutter", "en": "flutter", "kk": "", "zh": "拍翅；飄動", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_flyer", "en": "flyer", "kk": "", "zh": "飛行者；傳單", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_minute", "en": "minute", "kk": "", "zh": "分鐘", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_nearby", "en": "nearby", "kk": "", "zh": "附近的；在附近", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_reach", "en": "reach", "kk": "", "zh": "到達；伸手", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_seem", "en": "seem", "kk": "", "zh": "似乎", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_throat", "en": "throat", "kk": "", "zh": "喉嚨", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_hummingbird", "en": "hummingbird", "kk": "", "zh": "蜂鳥", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_afraid", "en": "afraid", "kk": "", "zh": "害怕的", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_exclaimed", "en": "exclaimed", "kk": "", "zh": "驚呼；大聲說", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_frightened", "en": "frightened", "kk": "", "zh": "受驚的", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_lift", "en": "lift", "kk": "", "zh": "舉起；電梯", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_shut", "en": "shut", "kk": "", "zh": "關閉", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_stretch", "en": "stretch", "kk": "", "zh": "伸展", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w17_wide", "en": "wide", "kk": "", "zh": "寬的", "week": 17, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_cork", "en": "cork", "kk": "", "zh": "軟木塞", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_corn", "en": "corn", "kk": "", "zh": "玉米", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_dirt", "en": "dirt", "kk": "", "zh": "泥土", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_fork", "en": "fork", "kk": "", "zh": "叉子", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_horn", "en": "horn", "kk": "", "zh": "角；喇叭", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_shirt", "en": "shirt", "kk": "", "zh": "襯衫", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_short", "en": "short", "kk": "", "zh": "短的", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_skirt", "en": "skirt", "kk": "", "zh": "裙子", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_squirt", "en": "squirt", "kk": "", "zh": "噴射", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_stir", "en": "stir", "kk": "", "zh": "攪拌", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_storm", "en": "storm", "kk": "", "zh": "暴風雨", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_third", "en": "third", "kk": "", "zh": "第三", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_thorn", "en": "thorn", "kk": "", "zh": "刺", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_burn", "en": "burn", "kk": "", "zh": "燃燒", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_curb", "en": "curb", "kk": "", "zh": "路緣；抑制", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_curl", "en": "curl", "kk": "", "zh": "捲曲", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_fur", "en": "fur", "kk": "", "zh": "毛皮", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_hurt", "en": "hurt", "kk": "", "zh": "受傷；疼痛", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_turn", "en": "turn", "kk": "", "zh": "轉彎；輪到", "week": 18, "section": "Phonics", "source": "photo"},
+  {"id": "w18_does", "en": "does", "kk": "", "zh": "做（does）", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_were", "en": "were", "kk": "", "zh": "是（are 的過去式）", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_every", "en": "every", "kk": "", "zh": "每一個", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_very", "en": "very", "kk": "", "zh": "非常", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_give", "en": "give", "kk": "", "zh": "給", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_live", "en": "live", "kk": "", "zh": "居住；生活", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_thing", "en": "thing", "kk": "", "zh": "東西；事情", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_your", "en": "your", "kk": "", "zh": "你的", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_many", "en": "many", "kk": "", "zh": "許多", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_who", "en": "who", "kk": "", "zh": "誰", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_any", "en": "any", "kk": "", "zh": "任何；一些", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_away", "en": "away", "kk": "", "zh": "離開；遠離", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_goes", "en": "goes", "kk": "", "zh": "去（go 的第三人稱）", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_find", "en": "find", "kk": "", "zh": "找到", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_kind", "en": "kind", "kk": "", "zh": "親切的；種類", "week": 18, "section": "Spelling", "source": "photo"},
+  {"id": "w18_ago", "en": "ago", "kk": "", "zh": "以前", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_another", "en": "another", "kk": "", "zh": "另一個", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_corner", "en": "corner", "kk": "", "zh": "角落", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_everywhere", "en": "everywhere", "kk": "", "zh": "到處", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_fold", "en": "fold", "kk": "", "zh": "摺疊", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_important", "en": "important", "kk": "", "zh": "重要的", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_mouse", "en": "mouse", "kk": "", "zh": "老鼠", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_neck", "en": "neck", "kk": "", "zh": "脖子", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_owl", "en": "owl", "kk": "", "zh": "貓頭鷹", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_sharp", "en": "sharp", "kk": "", "zh": "尖銳的", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_size", "en": "size", "kk": "", "zh": "大小；尺寸", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_supper", "en": "supper", "kk": "", "zh": "晚餐", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_argue", "en": "argue", "kk": "", "zh": "爭論", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_bright", "en": "bright", "kk": "", "zh": "明亮的；聰明的", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_button", "en": "button", "kk": "", "zh": "按鈕；鈕扣", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_chuckle", "en": "chuckle", "kk": "", "zh": "輕笑", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_ladybug", "en": "ladybug", "kk": "", "zh": "瓢蟲", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_prettiest", "en": "prettiest", "kk": "", "zh": "最漂亮的", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_shout", "en": "shout", "kk": "", "zh": "大喊", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_spots", "en": "spots", "kk": "", "zh": "斑點", "week": 18, "section": "Reading Plus", "source": "photo"},
+  {"id": "w18_whole", "en": "whole", "kk": "", "zh": "全部的；完整的", "week": 18, "section": "Reading Plus", "source": "photo"}
+];
+
+window.WORD_QUEST_WORD_BANK = [
+  ...LEGACY_WORD_QUEST_WORD_BANK,
+  ...GRADE_2B_PHOTO_WORDS
+];
+
+  </script>
+<script>
+    const wordBank = window.WORD_QUEST_WORD_BANK || [];
+
+    const roundEl = document.getElementById("round");
+    const correctEl = document.getElementById("correct");
+    const scoreEl = document.getElementById("score");
+    const wrongAttemptsEl = document.getElementById("wrongAttempts");
+    const starsEl = document.getElementById("stars");
+    const wordEl = document.getElementById("word");
+    const kkEl = document.getElementById("kk");
+    const optionsEl = document.getElementById("options");
+    const messageEl = document.getElementById("message");
+    const barEl = document.getElementById("bar");
+    const roundCountEl = document.getElementById("roundCount");
+    const quizModeEl = document.getElementById("quizMode");
+    const gameTypeEl = document.getElementById("gameType");
+    const gameModeTabsEl = document.getElementById("gameModeTabs");
+    const gameModeButtons = [...document.querySelectorAll(".game-mode-btn")];
+    const roundCountWrapEl = document.getElementById("roundCountWrap");
+    const weekSelectWrapEl = document.getElementById("weekSelectWrap");
+    const memorySizeWrapEl = document.getElementById("memorySizeWrap");
+    const memorySizeEl = document.getElementById("memorySize");
+    const memoryPreviewWrapEl = document.getElementById("memoryPreviewWrap");
+    const memoryPreviewEl = document.getElementById("memoryPreview");
+    const gameTypeWrapEl = document.getElementById("gameTypeWrap");
+    const quizModeWrapEl = document.getElementById("quizModeWrap");
+    const autoNextDelayWrapEl = document.getElementById("autoNextDelayWrap");
+    const characterWrapEl = document.getElementById("characterWrap");
+    const volumeWrapEl = document.getElementById("volumeWrap");
+    const musicStyleWrapEl = document.getElementById("musicStyleWrap");
+
+    const specialGameEl = document.getElementById("specialGame");
+    const weekSelectEl = document.getElementById("weekSelect");
+    const autoNextDelayEl = document.getElementById("autoNextDelay");
+    const characterSelectEl = document.getElementById("characterSelect");
+    const nextBtn = document.getElementById("nextBtn");
+    const volumeEl = document.getElementById("volume");
+    const volumeValueEl = document.getElementById("volumeValue");
+    const musicStyleEl = document.getElementById("musicStyle");
+    const musicToggleEl = document.getElementById("musicToggle");
+    const buddyEl = document.getElementById("buddy");
+    const speechEl = document.getElementById("speech");
+    const rewardEl = document.getElementById("reward");
+    const rewardEmojiEl = document.getElementById("rewardEmoji");
+    const rewardTextEl = document.getElementById("rewardText");
+    const rewardStarsEl = document.getElementById("rewardStars");
+    const finishCelebrationEl = document.getElementById("finishCelebration");
+    const confettiLayerEl = document.getElementById("confettiLayer");
+    const finishTrophyEl = document.getElementById("finishTrophy");
+    const finishTitleEl = document.getElementById("finishTitle");
+    const finishSummaryEl = document.getElementById("finishSummary");
+    const finishStarsEl = document.getElementById("finishStars");
+    const finishAgainBtn = document.getElementById("finishAgain");
+    const finishCloseBtn = document.getElementById("finishClose");
+
+
+
+    const safeStorage = (() => {
+      const memory = new Map();
+      return {
+        getItem(key) {
+          try { return window.localStorage.getItem(key); }
+          catch { return memory.has(key) ? memory.get(key) : null; }
+        },
+        setItem(key, value) {
+          try { window.localStorage.setItem(key, String(value)); }
+          catch { memory.set(key, String(value)); }
+        },
+        removeItem(key) {
+          try { window.localStorage.removeItem(key); }
+          catch { memory.delete(key); }
+        }
+      };
+    })();
+
+    const WRONG_KEY = "wordQuestQuizWrongIdsV1";
+    const CHARACTER_KEY = "wordQuestQuizCharacterV1";
+    const VOLUME_KEY = "wordQuestQuizVolumeV1";
+    const MUSIC_KEY = "wordQuestQuizMusicStyleV1";
+    const LAST_DECK_KEY = "wordQuestQuizLastDeckIdsV1";
+    const QUIZ_MODE_KEY = "wordQuestQuizModeV1";
+    const AUTO_NEXT_DELAY_KEY = "wordQuestQuizAutoNextDelayV1";
+    const WEEK_KEY = "wordQuestQuizWeekV1";
+    const MEMORY_SIZE_KEY = "wordQuestMemorySizeV1";
+    const MEMORY_PREVIEW_KEY = "wordQuestMemoryPreviewV1";
+    const GAME_TYPE_KEY = "wordQuestQuizGameTypeV1";
+
+    let deck = [];
+    let current = null;
+    let currentIndex = 0;
+    let correctCount = 0;
+    let score = 0;
+    let stars = 0;
+    let wrongAttempts = 0;
+    let sessionWrongIds = [];
+    let visibleWrongIds = [];
+    let answered = false;
+    let musicGain = null;
+    let musicInterval = null;
+    let musicEnabled = false;
+    let musicNoteIndex = 0;
+    let memoryState = null;
+    let memoryPreviewTimer = null;
+    let scrambleState = null;
+    let currentSentenceTemplate = "";
+    let specialDeck = [];
+    let specialIndex = 0;
+    let specialTimer = null;
+
+    // ----- Sound -----
+    let audioCtx = null;
+    let sfxGain = null;
+
+    function ensureAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      sfxGain = audioCtx.createGain();
+      musicGain = audioCtx.createGain();
+      sfxGain.gain.value = getVolume();
+      musicGain.gain.value = getVolume() * 0.22;
+      sfxGain.connect(audioCtx.destination);
+      musicGain.connect(audioCtx.destination);
+    }
+
+    function getVolume() {
+      return Math.max(0, Math.min(1, Number(volumeEl.value) / 100));
+    }
+
+    function updateVolumeUI() {
+      const value = Number(volumeEl.value);
+      volumeValueEl.textContent = `${value}%`;
+      safeStorage.setItem(VOLUME_KEY, String(value));
+      if (sfxGain) sfxGain.gain.value = getVolume();
+      if (musicGain) musicGain.gain.value = getVolume() * 0.22;
+    }
+
+    function loadVolume() {
+      const saved = safeStorage.getItem(VOLUME_KEY);
+      if (saved !== null && !Number.isNaN(Number(saved))) {
+        volumeEl.value = Math.max(0, Math.min(100, Number(saved)));
+      }
+      updateVolumeUI();
+    }
+
+
+    const musicThemes = {
+      adventure: [
+        { note: 392.00, len: 0.18 }, { note: 493.88, len: 0.18 },
+        { note: 523.25, len: 0.22 }, { note: 587.33, len: 0.18 },
+        { note: 523.25, len: 0.18 }, { note: 493.88, len: 0.22 },
+        { note: 440.00, len: 0.18 }, { note: 392.00, len: 0.26 }
+      ],
+      happy: [
+        { note: 523.25, len: 0.14 }, { note: 659.25, len: 0.14 },
+        { note: 783.99, len: 0.16 }, { note: 659.25, len: 0.14 },
+        { note: 698.46, len: 0.14 }, { note: 880.00, len: 0.18 },
+        { note: 783.99, len: 0.14 }, { note: 659.25, len: 0.22 }
+      ],
+      calm: [
+        { note: 329.63, len: 0.26 }, { note: 392.00, len: 0.26 },
+        { note: 440.00, len: 0.30 }, { note: 392.00, len: 0.26 },
+        { note: 349.23, len: 0.26 }, { note: 392.00, len: 0.30 },
+        { note: 329.63, len: 0.26 }, { note: 293.66, len: 0.34 }
+      ],
+      victory: [
+        { note: 523.25, len: 0.12 }, { note: 587.33, len: 0.12 },
+        { note: 659.25, len: 0.12 }, { note: 783.99, len: 0.15 },
+        { note: 1046.50, len: 0.18 }, { note: 783.99, len: 0.13 },
+        { note: 880.00, len: 0.13 }, { note: 1046.50, len: 0.24 }
+      ]
+    };
+
+    function playMusicTone(freq, duration = 0.18) {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.7, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(musicGain);
+      osc.start(now);
+      osc.stop(now + duration + 0.03);
+    }
+
+    function playMusicNote() {
+      if (!musicEnabled) return;
+      const style = musicStyleEl.value;
+      if (style === "off") return;
+      const theme = musicThemes[style] || musicThemes.adventure;
+      const item = theme[musicNoteIndex % theme.length];
+      playMusicTone(item.note, item.len);
+      musicNoteIndex++;
+    }
+
+    function startMusic() {
+      ensureAudio();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      if (musicStyleEl.value === "off") {
+        musicStyleEl.value = "adventure";
+      }
+      musicEnabled = true;
+      musicToggleEl.textContent = "🔇 關音樂";
+      safeStorage.setItem(MUSIC_KEY, musicStyleEl.value);
+      if (!musicInterval) {
+        playMusicNote();
+        musicInterval = setInterval(playMusicNote, 260);
+      }
+    }
+
+    function stopMusic() {
+      musicEnabled = false;
+      musicToggleEl.textContent = "🎵 開音樂";
+      clearInterval(musicInterval);
+      musicInterval = null;
+    }
+
+    function updateMusicStyle() {
+      safeStorage.setItem(MUSIC_KEY, musicStyleEl.value);
+      musicNoteIndex = 0;
+      if (musicStyleEl.value === "off") {
+        stopMusic();
+        return;
+      }
+      if (musicEnabled) {
+        stopMusic();
+        startMusic();
+      }
+    }
+
+    function loadMusicStyle() {
+      const saved = safeStorage.getItem(MUSIC_KEY);
+      if (saved && [...musicStyleEl.options].some(opt => opt.value === saved)) {
+        musicStyleEl.value = saved;
+      }
+    }
+
+    function playTone(freq, duration = 0.12, type = "sine", delay = 0) {
+      ensureAudio();
+      const now = audioCtx.currentTime + delay;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.8, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(sfxGain);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playCorrect() {
+      playTone(660, 0.1, "triangle", 0);
+      playTone(880, 0.12, "triangle", 0.08);
+      playTone(1046, 0.15, "triangle", 0.18);
+    }
+
+    function playWrong() {
+      playTone(240, 0.12, "sawtooth", 0);
+      playTone(190, 0.14, "sawtooth", 0.1);
+    }
+
+    function playWin() {
+      [523, 659, 784, 1046].forEach((n, i) => playTone(n, 0.16, "triangle", i * 0.12));
+    }
+
+    function speakQuestion() {
+      if (!current) return;
+      if (!("speechSynthesis" in window)) {
+        messageEl.textContent = "這個瀏覽器不支援發音，建議使用 Chrome 或 Edge。";
+        return;
+      }
+
+      const mode = quizModeEl.value;
+      const text = mode === "zh_to_en" ? current.zh.replace("；", "，") : current.en;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = mode === "zh_to_en" ? "zh-TW" : "en-US";
+      u.rate = mode === "zh_to_en" ? 0.95 : 0.82;
+      u.pitch = 1.08;
+      u.volume = getVolume();
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
+
+    function speakAnswerWord() {
+      if (!current || !("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(current.en);
+      u.lang = "en-US";
+      u.rate = 0.82;
+      u.pitch = 1.08;
+      u.volume = getVolume();
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
+
+    // ----- Utilities -----
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+
+    function loadLastDeckIds() {
+      try {
+        const data = JSON.parse(safeStorage.getItem(LAST_DECK_KEY) || "[]");
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLastDeckIds(ids) {
+      safeStorage.setItem(LAST_DECK_KEY, JSON.stringify(ids));
+    }
+
+    function loadWrongIds() {
+      try {
+        const data = JSON.parse(safeStorage.getItem(WRONG_KEY) || "[]");
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveWrongIds(ids) {
+      safeStorage.setItem(WRONG_KEY, JSON.stringify([...new Set(ids)].slice(0, 16)));
+      renderWrongList();
+    }
+
+    function recordWrong(id) {
+      // Persistent history: used to prioritize future questions.
+      const ids = loadWrongIds();
+      saveWrongIds([id, ...ids.filter(x => x !== id)]);
+
+      // Record internally only. Do not reveal in the wrong-answer panel yet.
+      sessionWrongIds = [id, ...sessionWrongIds.filter(x => x !== id)].slice(0, 16);
+    }
+
+    function revealWrongAfterSolved(id) {
+      if (!sessionWrongIds.includes(id)) return;
+      visibleWrongIds = [id, ...visibleWrongIds.filter(x => x !== id)].slice(0, 16);
+      renderWrongList();
+    }
+
+    function removeWrong(id) {
+      saveWrongIds(loadWrongIds().filter(x => x !== id));
+    }
+
+    function getWordById(id) {
+      return wordBank.find(w => w.id === id);
+    }
+
+    function renderWrongList() {
+      const ids = visibleWrongIds;
+      optionsEl.dataset.wrongCount = ids.length;
+      const wrongListEl = document.getElementById("wrongList");
+      wrongListEl.innerHTML = "";
+      if (!ids.length) {
+        wrongListEl.innerHTML = '<span class="wrong-chip">本局目前沒有錯誤 👍</span>';
+        return;
+      }
+      ids.forEach(id => {
+        const item = getWordById(id);
+        if (!item) return;
+        const chip = document.createElement("span");
+        chip.className = "wrong-chip";
+        chip.innerHTML = `<strong>${item.en}</strong> / ${item.zh}`;
+        wrongListEl.appendChild(chip);
+      });
+    }
+
+    // ----- Buddy -----
+    function faceParts(mood) {
+      if (mood === "happy") {
+        return `
+          <path class="eye" d="M48 62 Q56 54 64 62" />
+          <path class="eye" d="M96 62 Q104 54 112 62" />
+          <path class="mouth" d="M64 94 Q80 110 96 94" />
+        `;
+      }
+      if (mood === "sad") {
+        return `
+          <path class="eye" d="M48 64 Q56 58 64 64" />
+          <path class="eye" d="M96 64 Q104 58 112 64" />
+          <path class="mouth" d="M66 104 Q80 92 94 104" />
+        `;
+      }
+      return `
+        <circle cx="56" cy="62" r="5" fill="#2b2d42" />
+        <circle cx="104" cy="62" r="5" fill="#2b2d42" />
+        <path class="mouth" d="M68 98 Q80 104 92 98" />
+      `;
+    }
+
+    function sideMark(mood) {
+      if (mood === "happy") return '<text x="132" y="34" font-size="28" font-weight="900" fill="#2f9e44">★</text>';
+      if (mood === "sad") return '<text x="136" y="34" font-size="30" font-weight="900" fill="#e03131">!</text>';
+      return '<text x="126" y="34" font-size="15" font-weight="900" fill="#7c4a22">Hi!</text>';
+    }
+
+    function svgFor(character, mood) {
+      const face = faceParts(mood);
+      const mark = sideMark(mood);
+      const common = `
+        <style>
+          .eye,.mouth,.line,.whisker{stroke:#2b2d42;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+          .line,.whisker{stroke-width:4}.nose{fill:#2b2d42}.blush{opacity:.45}
+        </style>`;
+      const map = {
+        lion: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <circle cx="80" cy="68" r="48" fill="#f76707"/><circle cx="80" cy="68" r="41" fill="#ffd43b" stroke="#7a4b00" stroke-width="4"/>
+            <ellipse cx="80" cy="136" rx="34" ry="28" fill="#ffd43b" stroke="#7a4b00" stroke-width="4"/>
+            <ellipse cx="80" cy="80" rx="18" ry="14" fill="#fff3bf"/><circle class="blush" cx="44" cy="82" r="10" fill="#ff8787"/><circle class="blush" cx="116" cy="82" r="10" fill="#ff8787"/>
+            <circle cx="58" cy="28" r="12" fill="#ffd43b" stroke="#7a4b00" stroke-width="4"/><circle cx="102" cy="28" r="12" fill="#ffd43b" stroke="#7a4b00" stroke-width="4"/>
+            <circle cx="80" cy="76" r="5" class="nose"/>${face}
+            <circle cx="64" cy="158" r="12" fill="#ff922b" stroke="#7a4b00" stroke-width="4"/><circle cx="96" cy="158" r="12" fill="#ff922b" stroke="#7a4b00" stroke-width="4"/>
+          </svg>`,
+        rabbit: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <ellipse cx="58" cy="22" rx="12" ry="28" fill="#f8f0ff" stroke="#6b4e71" stroke-width="4"/><ellipse cx="102" cy="22" rx="12" ry="28" fill="#f8f0ff" stroke="#6b4e71" stroke-width="4"/>
+            <ellipse cx="58" cy="24" rx="5" ry="17" fill="#ffb3c6"/><ellipse cx="102" cy="24" rx="5" ry="17" fill="#ffb3c6"/>
+            <circle cx="80" cy="68" r="41" fill="#f8f0ff" stroke="#6b4e71" stroke-width="4"/><ellipse cx="80" cy="136" rx="34" ry="28" fill="#e7d8ff" stroke="#6b4e71" stroke-width="4"/>
+            <circle class="blush" cx="46" cy="82" r="10" fill="#ff8fab"/><circle class="blush" cx="114" cy="82" r="10" fill="#ff8fab"/><ellipse cx="80" cy="82" rx="16" ry="13" fill="#fff"/><circle cx="80" cy="76" r="4" fill="#ff8fab"/>
+            ${face}<ellipse cx="64" cy="158" rx="12" ry="10" fill="#ffb3c6" stroke="#6b4e71" stroke-width="4"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#ffb3c6" stroke="#6b4e71" stroke-width="4"/>
+          </svg>`,
+        cat: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <path d="M44 38 L58 18 L70 40 Z" fill="#ffe8cc" stroke="#7c4a22" stroke-width="4"/><path d="M116 38 L102 18 L90 40 Z" fill="#ffe8cc" stroke="#7c4a22" stroke-width="4"/>
+            <circle cx="80" cy="68" r="40" fill="#ffe8cc" stroke="#7c4a22" stroke-width="4"/><ellipse cx="80" cy="136" rx="34" ry="28" fill="#ffc078" stroke="#7c4a22" stroke-width="4"/>
+            <ellipse cx="80" cy="82" rx="18" ry="14" fill="#fff4e6"/><circle cx="80" cy="77" r="4" fill="#ff8fab"/>${face}
+            <path class="whisker" d="M20 82 L46 78"/><path class="whisker" d="M22 92 L46 90"/><path class="whisker" d="M114 78 L140 82"/><path class="whisker" d="M114 90 L138 92"/>
+            <ellipse cx="64" cy="158" rx="12" ry="10" fill="#ff922b" stroke="#7c4a22" stroke-width="4"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#ff922b" stroke="#7c4a22" stroke-width="4"/>
+          </svg>`,
+        dog: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <ellipse cx="42" cy="58" rx="16" ry="26" fill="#b08968" stroke="#5c3d2e" stroke-width="4"/><ellipse cx="118" cy="58" rx="16" ry="26" fill="#b08968" stroke="#5c3d2e" stroke-width="4"/>
+            <circle cx="80" cy="68" r="40" fill="#d8b384" stroke="#5c3d2e" stroke-width="4"/><ellipse cx="80" cy="136" rx="34" ry="28" fill="#d8b384" stroke="#5c3d2e" stroke-width="4"/>
+            <ellipse cx="80" cy="84" rx="20" ry="16" fill="#f3d5b5"/><circle cx="80" cy="78" r="5" class="nose"/>${face}
+            <circle class="blush" cx="46" cy="86" r="10" fill="#ff8787"/><circle class="blush" cx="114" cy="86" r="10" fill="#ff8787"/>
+            <ellipse cx="64" cy="158" rx="12" ry="10" fill="#8d5524" stroke="#5c3d2e" stroke-width="4"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#8d5524" stroke="#5c3d2e" stroke-width="4"/>
+          </svg>`,
+        panda: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <circle cx="50" cy="34" r="13" fill="#212529"/><circle cx="110" cy="34" r="13" fill="#212529"/>
+            <circle cx="80" cy="68" r="40" fill="#fff" stroke="#212529" stroke-width="4"/><ellipse cx="80" cy="136" rx="34" ry="28" fill="#fff" stroke="#212529" stroke-width="4"/>
+            <ellipse cx="56" cy="62" rx="14" ry="16" fill="#212529"/><ellipse cx="104" cy="62" rx="14" ry="16" fill="#212529"/><ellipse cx="80" cy="84" rx="18" ry="14" fill="#f8f9fa"/><circle cx="80" cy="77" r="5" class="nose"/>${face}
+            <ellipse cx="64" cy="158" rx="12" ry="10" fill="#212529"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#212529"/>
+          </svg>`,
+        bear: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <circle cx="52" cy="32" r="12" fill="#9c6644" stroke="#5c3d2e" stroke-width="4"/><circle cx="108" cy="32" r="12" fill="#9c6644" stroke="#5c3d2e" stroke-width="4"/>
+            <circle cx="80" cy="68" r="40" fill="#c08457" stroke="#5c3d2e" stroke-width="4"/><ellipse cx="80" cy="136" rx="34" ry="28" fill="#9c6644" stroke="#5c3d2e" stroke-width="4"/>
+            <ellipse cx="80" cy="84" rx="18" ry="14" fill="#e6b98a"/><circle cx="80" cy="77" r="5" class="nose"/>${face}
+            <circle class="blush" cx="46" cy="86" r="9" fill="#ff8787"/><circle class="blush" cx="114" cy="86" r="9" fill="#ff8787"/>
+            <ellipse cx="64" cy="158" rx="12" ry="10" fill="#7f5539" stroke="#5c3d2e" stroke-width="4"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#7f5539" stroke="#5c3d2e" stroke-width="4"/>
+          </svg>`,
+        fox: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <path d="M42 40 L58 16 L68 42 Z" fill="#ff922b" stroke="#7c2d12" stroke-width="4"/><path d="M118 40 L102 16 L92 42 Z" fill="#ff922b" stroke="#7c2d12" stroke-width="4"/>
+            <circle cx="80" cy="68" r="40" fill="#ff922b" stroke="#7c2d12" stroke-width="4"/><ellipse cx="80" cy="136" rx="34" ry="28" fill="#f76707" stroke="#7c2d12" stroke-width="4"/>
+            <path d="M58 76 Q80 100 102 76 Q96 94 80 102 Q64 94 58 76 Z" fill="#fff4e6"/><circle cx="80" cy="77" r="4" class="nose"/>${face}
+            <ellipse cx="64" cy="158" rx="12" ry="10" fill="#fff4e6" stroke="#7c2d12" stroke-width="4"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#fff4e6" stroke="#7c2d12" stroke-width="4"/>
+          </svg>`,
+        penguin: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <ellipse cx="80" cy="70" rx="40" ry="44" fill="#212529" stroke="#111" stroke-width="4"/><ellipse cx="80" cy="138" rx="34" ry="30" fill="#212529" stroke="#111" stroke-width="4"/>
+            <ellipse cx="80" cy="82" rx="22" ry="28" fill="#fff"/><ellipse cx="80" cy="138" rx="22" ry="20" fill="#fff"/><polygon points="80,76 70,84 90,84" fill="#ffd43b" stroke="#111" stroke-width="3"/>${face}
+            <ellipse cx="66" cy="160" rx="12" ry="8" fill="#ffd43b" stroke="#111" stroke-width="4"/><ellipse cx="94" cy="160" rx="12" ry="8" fill="#ffd43b" stroke="#111" stroke-width="4"/>
+          </svg>`,
+        frog: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <circle cx="56" cy="34" r="14" fill="#8ce99a" stroke="#2b8a3e" stroke-width="4"/><circle cx="104" cy="34" r="14" fill="#8ce99a" stroke="#2b8a3e" stroke-width="4"/>
+            <circle cx="56" cy="34" r="5" fill="#1b4332"/><circle cx="104" cy="34" r="5" fill="#1b4332"/>
+            <circle cx="80" cy="72" r="42" fill="#8ce99a" stroke="#2b8a3e" stroke-width="4"/><ellipse cx="80" cy="138" rx="34" ry="28" fill="#51cf66" stroke="#2b8a3e" stroke-width="4"/>
+            <ellipse cx="80" cy="84" rx="18" ry="14" fill="#d3f9d8"/><circle cx="80" cy="77" r="4" fill="#1b4332"/>${face}
+            <circle class="blush" cx="46" cy="88" r="10" fill="#ff8fa3"/><circle class="blush" cx="114" cy="88" r="10" fill="#ff8fa3"/>
+            <ellipse cx="64" cy="158" rx="12" ry="10" fill="#40c057" stroke="#2b8a3e" stroke-width="4"/><ellipse cx="96" cy="158" rx="12" ry="10" fill="#40c057" stroke="#2b8a3e" stroke-width="4"/>
+          </svg>`,
+        robot: `
+          <svg class="buddy-svg" viewBox="0 0 160 180">${common}${mark}
+            <path class="line" d="M80 12 L80 26"/><circle cx="80" cy="8" r="5" fill="#74c0fc"/><rect x="38" y="28" width="84" height="76" rx="18" fill="#adb5bd" stroke="#343a40" stroke-width="4"/>
+            <rect x="50" y="116" width="60" height="40" rx="16" fill="#868e96" stroke="#343a40" stroke-width="4"/>
+            <circle cx="58" cy="58" r="12" fill="#74c0fc"/><circle cx="102" cy="58" r="12" fill="#74c0fc"/>
+            ${mood === "sad" ? '<path d="M62 88 Q80 76 98 88" stroke="#1864ab" stroke-width="5" fill="none" stroke-linecap="round"/>' : mood === "happy" ? '<path d="M62 80 Q80 96 98 80" stroke="#1864ab" stroke-width="5" fill="none" stroke-linecap="round"/>' : '<path d="M64 84 L96 84" stroke="#1864ab" stroke-width="5" fill="none" stroke-linecap="round"/>'}
+          </svg>`
+      };
+      return map[character] || map.lion;
+    }
+
+    function setBuddyMood(mood, text) {
+      const character = buddyEl.dataset.character || "lion";
+      buddyEl.className = `buddy-stage ${mood}`;
+      buddyEl.dataset.character = character;
+      buddyEl.innerHTML = svgFor(character, mood);
+      speechEl.textContent = text;
+      if (mood !== "thinking") {
+        setTimeout(() => setBuddyMood("thinking", "下一題加油！"), 1150);
+      }
+    }
+
+    function setCharacter(character) {
+      buddyEl.dataset.character = character;
+      safeStorage.setItem(CHARACTER_KEY, character);
+      setBuddyMood("thinking", "我幫你加油！");
+    }
+
+    function populateWeekSelect() {
+      const weeks = [...new Set(wordBank
+        .map(w => Number(w.week))
+        .filter(w => Number.isFinite(w) && w > 0))]
+        .sort((a, b) => a - b);
+
+      weeks.forEach(week => {
+        const opt = document.createElement("option");
+        opt.value = String(week);
+        opt.textContent = `Week ${week}`;
+        weekSelectEl.appendChild(opt);
+      });
+
+      const saved = safeStorage.getItem(WEEK_KEY);
+      if (saved && [...weekSelectEl.options].some(opt => opt.value === saved)) {
+        weekSelectEl.value = saved;
+      }
+    }
+
+    function getSelectedWordPool() {
+      const value = weekSelectEl.value;
+      if (value === "all") return wordBank;
+      const week = Number(value);
+      return wordBank.filter(w => Number(w.week) === week);
+    }
+
+    const SENTENCE_BANK = {
+      bank: "We went to the ____ to get some money.", camp: "We sleep in a tent at ____.", hand: "Raise your ____ if you know the answer.", paint: "We use ____ to make the wall blue.", plant: "Please water the ____ every day.", pond: "A duck is swimming in the ____.", milk: "I drink a glass of ____ at breakfast.", quiet: "Please be ____ in the library.", backyard: "The children play in the ____.", basement: "Dad keeps the boxes in the ____.",
+      gift: "This ____ is for you.", golf: "My uncle likes to play ____.", shelf: "Put the book on the ____.", wolf: "The ____ howled at night.", plate: "Put the sandwich on the ____.", grape: "I ate one purple ____.", family: "My ____ eats dinner together.", window: "Please open the ____.", children: "The ____ are playing outside.", collar: "The dog has a red ____.",
+      screen: "Look at the ____ to see the picture.", spring: "Flowers grow in ____.", library: "We borrow books from the ____.", ribbon: "She tied a red ____ on the box.", rope: "The boy pulled the ____.", sign: "Read the ____ before you enter.", knee: "I hurt my ____ when I fell.", knife: "Be careful with the ____.", wrist: "She wears a watch on her ____.", picture: "I drew a ____ of my family.",
+      clock: "The ____ says it is three o'clock.", duck: "The ____ swims in the pond.", pocket: "I put a coin in my ____.", rocket: "The ____ flew into space.", snack: "I eat a small ____ after school.", boat: "The ____ sails on the lake.", snow: "We made a snowman in the ____.", soap: "Wash your hands with ____.", goat: "The ____ lives on the farm.", globe: "We can find Taiwan on the ____.",
+      moon: "The ____ is bright tonight.", zoo: "We saw many animals at the ____.", food: "We need ____ when we are hungry.", room: "Please clean your ____.", balloon: "The red ____ floated away.", gold: "The medal is made of ____.", first: "She came in ____ place.", third: "He was the ____ child in line.", crowd: "A big ____ watched the show.", people: "Many ____ came to the park.",
+      winner: "The ____ got a gold ribbon.", racehorse: "The ____ ran very fast.", shadow: "My ____ is long in the afternoon.", shore: "We walked along the ____.", chain: "The bike has a metal ____.", rain: "Take an umbrella because of the ____.", train: "We rode the ____ to the city.", bread: "I made a sandwich with ____.", tree: "The bird is sitting in the ____.", uncle: "My ____ is my father's brother.",
+      clover: "The rabbit ate some ____.", field: "The cows are in the ____.", sky: "The birds flew across the ____.", thunder: "We heard loud ____ during the storm.", road: "Look both ways before crossing the ____.", pillow: "I put my head on the ____.", tooth: "I lost one baby ____.", child: "The ____ is reading a book.", carrot: "The rabbit ate a ____.", gloves: "Wear your ____ when it is cold.",
+      haircut: "He got a new ____ today.", acorn: "The squirrel picked up an ____.", hill: "We walked up the ____.", squirrel: "A ____ climbed the tree.", boot: "I put one ____ on my foot.", school: "We go to ____ to learn.", spoon: "Eat the soup with a ____.", claw: "The crab has a sharp ____.", faucet: "Turn off the ____ after washing.", berry: "The bird ate a red ____.",
+      insect: "An ant is a small ____.", flag: "The ____ moved in the wind.", jewelry: "She keeps her ____ in a small box.", park: "We play at the ____ after school.", barn: "The horse sleeps in the ____.", shark: "A ____ swims in the ocean.", honey: "Bees make ____.", meadow: "The horse ran across the ____.", baby: "The ____ is sleeping.", bunny: "The ____ hopped across the grass.",
+      party: "We had cake at the ____.", pony: "The little ____ ran beside its mother.", spider: "A ____ made a web.", glass: "Please give me a ____ of water.", star: "We saw a bright ____ in the sky.", bench: "We sat on a ____ in the park.", brush: "Use a ____ to clean your hair.", watch: "I wear a ____ on my wrist.", bird: "A ____ is singing in the tree.", horse: "The ____ ran around the farm.",
+      girl: "The ____ is reading a book.", dinosaur: "The museum has a big ____.", sister: "My ____ helps me with homework.", card: "I made a birthday ____ for Mom.", harp: "She played music on the ____.", ladder: "He climbed the ____ carefully.", paper: "Write your name on the ____.", water: "Please drink some ____.", hummingbird: "A ____ can hover near a flower.", corn: "We ate sweet ____ for dinner.",
+      fork: "Use a ____ to eat the noodles.", shirt: "He is wearing a blue ____.", skirt: "She wore a red ____.", storm: "The ____ brought strong wind and rain.", mouse: "The cat saw a small ____.", owl: "An ____ hunts at night.", button: "Push the ____ to start the toy.", ladybug: "A red ____ landed on the leaf."
+    };
+
+    // General phonics fallback pool.
+    // Used only when a word does NOT have an explicit Week/Phonics mapping.
+    const PHONICS_PATTERNS = [
+      "scr","spl","spr","str","thr","tch","igh",
+      "ai","ay","ee","ea","oa","ow","oo","au","aw","ew",
+      "ar","er","ir","or","ur",
+      "kn","wr","wh","ck","gh","sh","ch","th","ng",
+      "nd","nk","nt","mp","lt","lf","ft","y"
+    ];
+
+    // Curriculum-specific phonics rules taken from the uploaded Week photos.
+    // These have higher priority than the general fallback rules.
+    const WEEK_PHONICS_RULES = {
+      1: {
+        options: ["nd","nk","nt","mp"],
+        words: {
+          bank:"nk", camp:"mp", hand:"nd", paint:"nt", plant:"nt", pond:"nd",
+          pump:"mp", stamp:"mp", stand:"nd", stump:"mp", wind:"nd", wink:"nk"
+        }
+      },
+      2: {
+        options: ["lt","lf","ft"],
+        words: {
+          belt:"lt", elf:"lf", gift:"ft", golf:"lf", left:"ft", lift:"ft",
+          melt:"lt", quilt:"lt", raft:"ft", shelf:"lf", wilt:"lt", wolf:"lf"
+        }
+      },
+      3: {
+        options: ["scr","spl","spr","str"],
+        words: {
+          scrape:"scr", scratch:"scr", screen:"scr", scrub:"scr",
+          splash:"spl", split:"spl",
+          sprain:"spr", spray:"spr", spring:"spr",
+          strap:"str", stripes:"str", strong:"str"
+        }
+      },
+      4: {
+        options: ["kn","wr"],
+        words: {
+          knee:"kn", kneel:"kn", knife:"kn", knit:"kn", knob:"kn", knock:"kn", knot:"kn",
+          wrap:"wr", wreath:"wr", wrench:"wr", wrist:"wr", write:"wr", wrong:"wr"
+        }
+      },
+      5: {
+        options: ["ck"],
+        words: {
+          brick:"ck", check:"ck", chick:"ck", clock:"ck", duck:"ck", lock:"ck",
+          pocket:"ck", rack:"ck", rock:"ck", rocket:"ck", snack:"ck", thick:"ck", track:"ck"
+        }
+      },
+      6: {
+        options: ["gh"],
+        words: {
+          bright:"gh", caught:"gh", eight:"gh", flight:"gh", high:"gh", knight:"gh",
+          light:"gh", night:"gh", right:"gh", sigh:"gh", sight:"gh", straight:"gh", tight:"gh"
+        }
+      },
+      10: {
+        options: ["ai","ay","ee","ea"],
+        words: {
+          braid:"ai", chain:"ai", hay:"ay", mail:"ai", pail:"ai", paint:"ai",
+          pay:"ay", rain:"ai", sail:"ai", stain:"ai", train:"ai", tray:"ay",
+          beads:"ea", bean:"ea", beef:"ee", bread:"ea", head:"ea", heel:"ee",
+          leaf:"ea", screen:"ee", seat:"ea", steam:"ea", thread:"ea", tree:"ee"
+        }
+      },
+      11: {
+        options: ["oa","ow"],
+        words: {
+          blow:"ow", bowl:"ow", crow:"ow", goat:"oa", pillow:"ow", road:"oa",
+          snow:"ow", soap:"oa", throw:"ow", toad:"oa", toast:"oa", window:"ow"
+        }
+      },
+      12: {
+        options: ["oo","au","aw"],
+        words: {
+          boot:"oo", cook:"oo", hood:"oo", hook:"oo", hoop:"oo", moose:"oo",
+          pool:"oo", school:"oo", shook:"oo", spoon:"oo", stood:"oo", stool:"oo",
+          cause:"au", claw:"aw", crawl:"aw", draw:"aw", faucet:"au", fawn:"aw",
+          laundry:"au", paw:"aw", sauce:"au", shawl:"aw", straw:"aw", yawn:"aw"
+        }
+      },
+      13: {
+        options: ["ew"],
+        words: {
+          blew:"ew", chew:"ew", dew:"ew", few:"ew", flew:"ew", grew:"ew",
+          jewelry:"ew", mew:"ew", new:"ew", screw:"ew", stew:"ew", threw:"ew"
+        }
+      },
+      15: {
+        options: ["y","ch","sh","th","thr","wh"],
+        words: {
+          baby:"y", bunny:"y", city:"y", cry:"y", dry:"y", fly:"y", fry:"y",
+          happy:"y", party:"y", pony:"y", silly:"y", sky:"y", story:"y",
+          chain:"ch", chop:"ch", shed:"sh", shelf:"sh", thick:"th", thin:"th",
+          think:"th", thread:"thr", three:"thr", throat:"thr", whale:"wh", wheel:"wh"
+        }
+      },
+      16: {
+        options: ["sh","ch","tch","th","ng"],
+        words: {
+          bath:"th", bench:"ch", branch:"ch", brush:"sh", dish:"sh", ditch:"tch",
+          path:"th", ring:"ng", swing:"ng", switch:"tch", teeth:"th", watch:"tch"
+        }
+      },
+      17: {
+        options: ["ar","er"],
+        words: {
+          barn:"ar", card:"ar", dart:"ar", fern:"er", harp:"ar", ladder:"er",
+          letter:"er", number:"er", paper:"er", shark:"ar", slipper:"er", water:"er", yard:"ar"
+        }
+      },
+      18: {
+        options: ["ir","or","ur"],
+        words: {
+          cork:"or", corn:"or", dirt:"ir", fork:"or", horn:"or", shirt:"ir",
+          short:"or", skirt:"ir", squirt:"ir", stir:"ir", storm:"or", third:"ir",
+          thorn:"or", burn:"ur", curb:"ur", curl:"ur", fur:"ur", hurt:"ur", turn:"ur"
+        }
+      }
+    };
+
+    function normalizeLetters(word) {
+      return word.toLowerCase().replace(/[^a-z]/g, "");
+    }
+
+    function getWeekPhonicsInfo(item) {
+      const week = Number(item.week);
+      const rule = WEEK_PHONICS_RULES[week];
+      if (!rule) return null;
+
+      // Only use curriculum mapping when this word is actually in the Week's
+      // Phonics list. The explicit word table is the authoritative source.
+      const key = normalizeLetters(item.en);
+      const pattern = rule.words[key];
+      if (!pattern) return null;
+
+      return {
+        pattern,
+        source: "week",
+        options: [...rule.options],
+        week
+      };
+    }
+
+    function getGeneralPhonicsInfo(item) {
+      const s = normalizeLetters(item.en);
+      const hits = PHONICS_PATTERNS
+        .filter(p => s.includes(p))
+        .sort((a,b) => b.length - a.length);
+
+      if (!hits.length) return null;
+
+      return {
+        pattern: hits[0],
+        source: "general",
+        options: [],
+        week: Number(item.week) || 0
+      };
+    }
+
+    function getPhonicsInfo(item) {
+      return getWeekPhonicsInfo(item) || getGeneralPhonicsInfo(item);
+    }
+
+    function inferredPhonics(item) {
+      const info = getPhonicsInfo(item);
+      return info ? info.pattern : "";
+    }
+
+    function buildPhonicsChoices(info) {
+      const answer = info.pattern;
+      const choices = [];
+
+      // Curriculum questions: same-Week patterns first.
+      if (info.source === "week") {
+        info.options.forEach(p => {
+          if (p !== answer && !choices.includes(p)) choices.push(p);
+        });
+      }
+
+      // Fill remaining distractors from general rules.
+      const fallback = shuffle(PHONICS_PATTERNS.filter(p => p !== answer && !choices.includes(p)));
+      while (choices.length < 4 && fallback.length) {
+        choices.push(fallback.shift());
+      }
+
+      return shuffle([answer, ...choices.slice(0, 4)]);
+    }
+
+    function maskPhonicsPattern(word, pattern) {
+      const re = new RegExp(pattern, "i");
+      return word.replace(re, "_".repeat(pattern.length));
+    }
+
+    function speakText(text) {
+      if (!("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US"; u.rate = 0.82; u.pitch = 1.06; u.volume = getVolume();
+      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    }
+    function speakCurrentGamePrompt() {
+      if (!current) return;
+      const type = gameTypeEl.value;
+
+      if (type === "quiz") {
+        speakQuestion();
+        return;
+      }
+
+      if (type === "sentence") {
+        if (currentSentenceTemplate) {
+          const fullSentence = currentSentenceTemplate.replace("____", current.en);
+          speakText(fullSentence);
+        }
+        return;
+      }
+
+      // 拼字 / 自然發音：唸目前單字。
+      speakText(current.en);
+    }
+
+    function setStandardVisibility(show) {
+      const wordBox = document.querySelector(".word-box");
+      wordBox.hidden = !show;
+      optionsEl.hidden = !show;
+      specialGameEl.hidden = show;
+      nextBtn.hidden = !show;
+
+      // 上方「唸題目」在翻牌不需要；其他模式仍可使用。
+      document.getElementById("speakBtn").hidden =
+        gameTypeEl.value === "memory";
+    }
+
+
+    function updateGameModeUI() {
+      const type = gameTypeEl.value;
+
+      gameModeButtons.forEach(btn => {
+        const active = btn.dataset.game === type;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+      // 上方已經有大型遊戲切換按鈕，所以不再顯示重複的「遊戲類型」下拉選單。
+      if (gameTypeWrapEl) gameTypeWrapEl.classList.add("mode-hidden");
+
+      // 共用設定：週次、角色、音量、背景音樂。
+      [weekSelectWrapEl, characterWrapEl, volumeWrapEl, musicStyleWrapEl]
+        .forEach(el => el && el.classList.remove("mode-hidden"));
+
+      // 題數在翻牌模式由「4×2 / 4×4 / 4×8」決定，所以翻牌時隱藏一般題數。
+      if (roundCountWrapEl) roundCountWrapEl.classList.toggle("mode-hidden", type === "memory");
+
+      // 模式專屬設定全部先隱藏，再依遊戲類型開啟。
+      if (quizModeWrapEl) quizModeWrapEl.classList.add("mode-hidden");
+      if (autoNextDelayWrapEl) autoNextDelayWrapEl.classList.add("mode-hidden");
+      if (memorySizeWrapEl) memorySizeWrapEl.classList.add("mode-hidden");
+      if (memoryPreviewWrapEl) memoryPreviewWrapEl.classList.add("mode-hidden");
+
+      if (type === "memory") {
+        if (memorySizeWrapEl) memorySizeWrapEl.classList.remove("mode-hidden");
+        if (memoryPreviewWrapEl) memoryPreviewWrapEl.classList.remove("mode-hidden");
+      }
+
+      // 五選一才需要「英選中 / 中選英」。
+      if (type === "quiz" && quizModeWrapEl) {
+        quizModeWrapEl.classList.remove("mode-hidden");
+      }
+
+      // 五選一與句子填空有自動進下一題，因此保留答對停留時間。
+      if ((type === "quiz" || type === "sentence") && autoNextDelayWrapEl) {
+        autoNextDelayWrapEl.classList.remove("mode-hidden");
+      }
+
+      // 翻牌不需要「唸題目」；其餘模式保留。
+      document.getElementById("speakBtn").classList.toggle("mode-hidden", type === "memory");
+
+      // 出題模式只有五選一可操作。
+      quizModeEl.disabled = type !== "quiz";
+    }
+
+    function switchGameType(type) {
+      const valid = ["quiz", "memory", "scramble", "phonics", "sentence"];
+      if (!valid.includes(type)) type = "quiz";
+
+      gameTypeEl.value = type;
+      safeStorage.setItem(GAME_TYPE_KEY, type);
+      updateGameModeUI();
+
+      // 清掉前一種遊戲留下的畫面與狀態，再立即切換。
+      clearSpecialTimer();
+      clearMemoryPreviewTimer();
+      memoryState = null;
+      scrambleState = null;
+      currentSentenceTemplate = "";
+      specialDeck = [];
+      specialIndex = 0;
+      optionsEl.innerHTML = "";
+      specialGameEl.innerHTML = "";
+      wordEl.textContent = "";
+      kkEl.textContent = "";
+      answered = false;
+
+      newGame();
+    }
+
+
+
+    function clearConfetti() {
+      confettiLayerEl.innerHTML = "";
+    }
+
+    function launchConfetti(count = 70) {
+      clearConfetti();
+      const palette = ["#ff6b6b","#ffd43b","#69db7c","#74c0fc","#b197fc","#ffa94d"];
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = palette[i % palette.length];
+        piece.style.animationDelay = `${Math.random() * 0.8}s`;
+        piece.style.animationDuration = `${2.4 + Math.random() * 1.8}s`;
+        piece.style.setProperty("--drift", `${-120 + Math.random() * 240}px`);
+        piece.style.setProperty("--spin", `${360 + Math.random() * 720}deg`);
+        confettiLayerEl.appendChild(piece);
+      }
+    }
+
+    function showFinishCelebration({title="完成！", summary="", stars=0, perfect=false} = {}) {
+      finishTitleEl.textContent = title;
+      finishSummaryEl.textContent = summary;
+      finishStarsEl.textContent = "★".repeat(Math.max(0, Math.min(3, stars)));
+      finishTrophyEl.textContent = perfect ? "🏆" : (stars >= 2 ? "🌟" : "🎉");
+      finishCelebrationEl.classList.add("show");
+      finishCelebrationEl.setAttribute("aria-hidden", "false");
+
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        launchConfetti(perfect ? 90 : 60);
+      }
+    }
+
+    function hideFinishCelebration() {
+      finishCelebrationEl.classList.remove("show");
+      finishCelebrationEl.setAttribute("aria-hidden", "true");
+      clearConfetti();
+    }
+
+    function clearMemoryPreviewTimer() {
+      if (memoryPreviewTimer) {
+        clearTimeout(memoryPreviewTimer);
+        memoryPreviewTimer = null;
+      }
+    }
+
+    function clearSpecialTimer() {
+      if (specialTimer) {
+        clearTimeout(specialTimer);
+        specialTimer = null;
+      }
+    }
+
+    function buildSpecialDeck(filterFn = () => true) {
+      const requested = Number(roundCountEl.value);
+      const pool = shuffle(getSelectedWordPool().filter(filterFn));
+      return pool.slice(0, Math.min(requested, pool.length));
+    }
+
+    function updateSpecialStats() {
+      const total = specialDeck.length || 0;
+      const shown = total ? Math.min(specialIndex + 1, total) : 0;
+      roundEl.textContent = `${shown}/${total}`;
+      correctEl.textContent = correctCount;
+      scoreEl.textContent = score;
+      wrongAttemptsEl.textContent = `${wrongAttempts}/3`;
+      starsEl.textContent = stars;
+      barEl.style.width = `${total ? (specialIndex / total) * 100 : 0}%`;
+    }
+
+    function recordSpecialWrong() {
+      wrongAttempts++;
+      let deducted = false;
+      if (wrongAttempts >= 3) {
+        score -= 5;
+        wrongAttempts = 0;
+        deducted = true;
+        showScorePop("-5", "bad");
+      }
+      updateSpecialStats();
+      return deducted;
+    }
+
+    function finishSpecialGame(label = "完成！") {
+      clearSpecialTimer();
+      const total = specialDeck.length;
+      barEl.style.width = "100%";
+      stars = total && correctCount === total ? 3 :
+              total && correctCount >= Math.ceil(total * 0.8) ? 2 :
+              total && correctCount >= Math.ceil(total * 0.5) ? 1 : 0;
+      starsEl.textContent = stars;
+      roundEl.textContent = `${total}/${total}`;
+      const perfect = total > 0 && correctCount === total;
+      showReward(`${label} ${stars} 顆星`, stars === 3 ? "🏆" : (stars ? "⭐" : "💪"), stars === 3);
+      setBuddyMood(stars ? "happy" : "thinking", stars === 3 ? "全部答對！" : "完成了！");
+      messageEl.textContent = `${label} 答對 ${correctCount}/${total}，總分 ${score}`;
+
+      showFinishCelebration({
+        title: label,
+        summary: `答對 ${correctCount}/${total} · 分數 ${score}`,
+        stars,
+        perfect
+      });
+    }
+
+    function advanceSpecialGame(renderFn, label) {
+      clearSpecialTimer();
+      if (specialIndex >= specialDeck.length - 1) {
+        specialTimer = setTimeout(() => finishSpecialGame(label), Number(autoNextDelayEl.value));
+      } else {
+        specialTimer = setTimeout(() => {
+          specialIndex++;
+          renderFn();
+        }, Number(autoNextDelayEl.value));
+      }
+    }
+
+    function renderByGameType() {
+      const t = gameTypeEl.value;
+      if (t === "quiz") return renderQuestion();
+      if (t === "memory") return renderMemoryGame();
+      if (t === "scramble") return renderScrambleGame();
+      if (t === "phonics") return renderPhonicsGame();
+      if (t === "sentence") return renderSentenceGame();
+    }
+
+    function renderMemoryGame() {
+      clearSpecialTimer();
+      clearMemoryPreviewTimer();
+      setStandardVisibility(false);
+      document.getElementById("speakBtn").hidden = true;
+
+      const requestedPairs = Number(memorySizeEl.value);
+      const previewMs = Number(memoryPreviewEl.value);
+      const pool = shuffle(getSelectedWordPool());
+      const pairCount = Math.min(requestedPairs, pool.length);
+
+      if (!pairCount) {
+        specialGameEl.innerHTML = "<div class='mode-note'>這個 Week 沒有可用單字。</div>";
+        return;
+      }
+
+      const picked = pool.slice(0, pairCount);
+      specialDeck = picked;
+      specialIndex = 0;
+
+      const cards = shuffle(picked.flatMap(w => [
+        {key:w.id, text:w.en, kind:"en", word:w},
+        {key:w.id, text:w.zh, kind:"zh", word:w}
+      ]));
+
+      memoryState = {
+        cards,
+        first:null,
+        lock:true,
+        previewing:true,
+        matched:new Set(),
+        moves:0,
+        pairCount
+      };
+
+      const boardLabel = requestedPairs === 4 ? "4 × 2" : requestedPairs === 8 ? "4 × 4" : "4 × 8";
+      const shortageNote = pairCount < requestedPairs
+        ? `（這個 Week 只有 ${pairCount} 個可用單字）`
+        : "";
+      const previewSec = Math.round(previewMs / 1000);
+
+      specialGameEl.innerHTML = `
+        <div class="mode-note">${boardLabel}｜先看 ${previewSec} 秒記住位置，之後全部蓋上 ${shortageNote}</div>
+        <div class="memory-countdown" aria-live="polite">記憶時間：${previewSec} 秒</div>
+        <div class="memory-grid"></div>`;
+
+      const grid = specialGameEl.querySelector(".memory-grid");
+      grid.dataset.board = boardLabel;
+
+      cards.forEach((c,i)=>{
+        const b=document.createElement("button");
+        b.className="memory-card preview";
+        b.textContent=c.text;
+        b.dataset.i=i;
+        b.disabled = true;
+        b.addEventListener("click",()=>flipMemory(b,i));
+        grid.appendChild(b);
+      });
+
+      correctCount = 0;
+      score = 0;
+      wrongAttempts = 0;
+      stars = 0;
+      roundEl.textContent=`0/${pairCount}`;
+      correctEl.textContent="0";
+      scoreEl.textContent="0";
+      wrongAttemptsEl.textContent="0/3";
+      starsEl.textContent="0";
+      barEl.style.width="0%";
+      messageEl.textContent=`先記住所有牌的位置，${previewSec} 秒後會全部蓋上。`;
+
+      // 倒數顯示。
+      const countdownEl = specialGameEl.querySelector(".memory-countdown");
+      let remain = previewSec;
+      const countdownId = setInterval(() => {
+        remain--;
+        if (countdownEl && remain > 0) {
+          countdownEl.textContent = `記憶時間：${remain} 秒`;
+        }
+        if (remain <= 0) clearInterval(countdownId);
+      }, 1000);
+
+      memoryPreviewTimer = setTimeout(() => {
+        if (!memoryState || !memoryState.previewing) return;
+
+        specialGameEl.querySelectorAll(".memory-card").forEach(btn => {
+          btn.classList.remove("preview");
+          btn.classList.add("covered");
+          btn.textContent = "?";
+          btn.disabled = false;
+        });
+
+        memoryState.previewing = false;
+        memoryState.lock = false;
+
+        if (countdownEl) countdownEl.textContent = "開始翻牌！";
+        messageEl.textContent = "開始配對：翻兩張牌，找出英文和中文！";
+        memoryPreviewTimer = null;
+      }, previewMs);
+    }
+
+    function flipMemory(btn,i) {
+      const st=memoryState;
+      if(!st || st.previewing || st.lock || st.matched.has(i) || (st.first&&st.first.i===i)) return;
+
+      const c=st.cards[i];
+      btn.classList.remove("covered");
+      btn.textContent=c.text;
+      if(c.kind==="en") speakText(c.word.en);
+
+      if(!st.first){
+        st.first={i,btn,c};
+        return;
+      }
+
+      st.moves++;
+      const a=st.first;
+      st.first=null;
+
+      if(a.c.key===c.key && a.c.kind!==c.kind){
+        [a.i,i].forEach(x=>st.matched.add(x));
+        a.btn.classList.add("matched");
+        btn.classList.add("matched");
+        playCorrect();
+
+        correctCount = st.matched.size / 2;
+        score = correctCount * 10;
+        revealWrongAfterSolved(c.word.id);
+        roundEl.textContent=`${correctCount}/${st.pairCount}`;
+        correctEl.textContent=correctCount;
+        scoreEl.textContent=score;
+        barEl.style.width=`${correctCount/st.pairCount*100}%`;
+        messageEl.textContent=`配對成功！${c.word.en} = ${c.word.zh}`;
+
+        if(st.matched.size===st.cards.length){
+          stars=3;
+          starsEl.textContent="3";
+          showReward("翻牌完成！","🏆",true);
+          setBuddyMood("happy","全部配對成功！");
+          playWin();
+          showFinishCelebration({
+            title: "翻牌完成！",
+            summary: `完成 ${st.pairCount} 組配對 · 分數 ${score}`,
+            stars: 3,
+            perfect: true
+          });
+        }
+      } else {
+        playWrong();
+
+        // 翻錯一組時，兩張牌涉及的單字都列入錯題，避免錯題沒有被保存。
+        recordWrong(a.c.word.id);
+        recordWrong(c.word.id);
+
+        const deducted = recordSpecialWrong();
+        st.lock=true;
+        messageEl.textContent = deducted
+          ? "不是一組；累積錯 3 次，扣 5 分。錯題已記錄。"
+          : `不是一組；錯誤 ${wrongAttempts}/3。錯題已記錄。`;
+
+        setTimeout(()=>{
+          a.btn.classList.add("covered");
+          a.btn.textContent="?";
+          btn.classList.add("covered");
+          btn.textContent="?";
+          st.lock=false;
+        },850);
+      }
+    }
+
+    function renderScrambleGame() {
+      clearSpecialTimer();
+      setStandardVisibility(false);
+
+      if (!specialDeck.length) {
+        specialDeck = buildSpecialDeck(w => {
+          const n = normalizeLetters(w.en).length;
+          return n >= 3 && n <= 14;
+        });
+        specialIndex = 0;
+      }
+
+      if(!specialDeck.length){
+        specialGameEl.innerHTML="<div class='mode-note'>這個 Week 沒有適合的拼字單字。</div>";
+        return;
+      }
+
+      current = specialDeck[specialIndex];
+      const target = normalizeLetters(current.en);
+
+      // 拼字只挖 2~3 個字母，不再要求整個單字重拼。
+      // 3~4 字母：挖 2 個；5 字母以上：挖 3 個。
+      const blankCount = target.length >= 5 ? 3 : 2;
+      const allIdx = [...target].map((_, i) => i);
+      const blankIdx = shuffle(allIdx)
+        .slice(0, Math.min(blankCount, target.length - 1))
+        .sort((a,b)=>a-b);
+
+      const missingLetters = blankIdx.map(i => target[i]);
+
+      scrambleState = {
+        target,
+        blankIdx,
+        missingLetters,
+        shuffledMissing: shuffle(missingLetters),
+        answerByPos: {},
+        locked: false
+      };
+
+      specialGameEl.innerHTML = `
+        <div class="mode-note">第 ${specialIndex+1}/${specialDeck.length} 題｜補回 ${blankIdx.length} 個字母</div>
+        <div class="scramble-word"></div>
+        <div class="letter-bank"></div>
+        <div class="action-row">
+          <button type="button" id="scrClear">清除</button>
+          <button type="button" id="scrCheck">檢查答案</button>
+        </div>`;
+
+      renderScrambleTiles();
+
+      specialGameEl.querySelector("#scrClear").addEventListener("click",()=>{
+        if (scrambleState.locked) return;
+        scrambleState.answerByPos = {};
+        renderScrambleTiles();
+      });
+      specialGameEl.querySelector("#scrCheck").addEventListener("click",checkScramble);
+
+      messageEl.textContent=`提示：${current.zh}`;
+      updateSpecialStats();
+      speakText(current.en);
+    }
+
+    function renderScrambleTiles(){
+      const st = scrambleState;
+      const wordBox = specialGameEl.querySelector(".scramble-word");
+      const bank = specialGameEl.querySelector(".letter-bank");
+      if (!st || !wordBox || !bank) return;
+
+      wordBox.innerHTML = "";
+      bank.innerHTML = "";
+
+      [...st.target].forEach((ch, i) => {
+        const span = document.createElement("span");
+        span.className = "answer-slot";
+
+        if (st.blankIdx.includes(i)) {
+          span.textContent = st.answerByPos[i] || "";
+          span.dataset.pos = i;
+          span.title = `第 ${i+1} 個字母`;
+        } else {
+          span.textContent = ch;
+          span.classList.add("fixed-letter");
+        }
+        wordBox.appendChild(span);
+      });
+
+      // 已用字母從候選池扣掉，保留重複字母的正確數量。
+      const remaining = [...st.shuffledMissing];
+      Object.values(st.answerByPos).forEach(ch => {
+        const idx = remaining.indexOf(ch);
+        if (idx >= 0) remaining.splice(idx, 1);
+      });
+
+      remaining.forEach(ch => {
+        const b = document.createElement("button");
+        b.className = "letter-tile";
+        b.textContent = ch;
+        b.disabled = st.locked;
+        b.addEventListener("click",()=>{
+          if (st.locked) return;
+          const nextPos = st.blankIdx.find(pos => !st.answerByPos[pos]);
+          if (nextPos === undefined) return;
+          st.answerByPos[nextPos] = ch;
+          renderScrambleTiles();
+        });
+        bank.appendChild(b);
+      });
+
+      // 點已填入的空格，可以把該字母退回候選區。
+      wordBox.querySelectorAll(".answer-slot").forEach(slot => {
+        const pos = Number(slot.dataset.pos);
+        if (!Number.isFinite(pos) || !st.answerByPos[pos] || st.locked) return;
+        slot.style.cursor = "pointer";
+        slot.addEventListener("click", () => {
+          delete st.answerByPos[pos];
+          renderScrambleTiles();
+        });
+      });
+    }
+
+    function checkScramble(){
+      if (!scrambleState || scrambleState.locked) return;
+
+      const st = scrambleState;
+      const allFilled = st.blankIdx.every(pos => !!st.answerByPos[pos]);
+      if (!allFilled) {
+        messageEl.textContent = "還有空格沒有填完。";
+        return;
+      }
+
+      const correct = st.blankIdx.every(pos => st.answerByPos[pos] === st.target[pos]);
+
+      if(correct){
+        st.locked = true;
+        playCorrect();
+        score += 10;
+        correctCount++;
+        revealWrongAfterSolved(current.id);
+        messageEl.textContent=`答對！${current.en} = ${current.zh}`;
+        speakText(current.en);
+        showScorePop("+10","good");
+        updateSpecialStats();
+        advanceSpecialGame(renderScrambleGame, "拼字完成！");
+      } else {
+        playWrong();
+        recordWrong(current.id);
+        const deducted = recordSpecialWrong();
+        messageEl.textContent = deducted
+          ? "還不對；累積錯 3 次，扣 5 分。這個單字已記錄。"
+          : `還不對；錯誤 ${wrongAttempts}/3。這個單字已記錄。`;
+        if (!deducted) showScorePop("再試一次","bad");
+      }
+    }
+
+    function renderPhonicsGame() {
+      clearSpecialTimer();
+      setStandardVisibility(false);
+
+      if (!specialDeck.length) {
+        specialDeck = buildSpecialDeck(w => !!getPhonicsInfo(w));
+        specialIndex = 0;
+      }
+
+      if(!specialDeck.length){
+        specialGameEl.innerHTML="<div class='mode-note'>這個 Week 暫時沒有可辨識的 phonics pattern。</div>";
+        return;
+      }
+
+      current = specialDeck[specialIndex];
+      const info = getPhonicsInfo(current);
+      const pat = info.pattern;
+      const opts = buildPhonicsChoices(info);
+      const sourceLabel = info.source === "week"
+        ? `Week ${info.week} 教材規則`
+        : "通用 phonics 規則";
+
+      specialGameEl.innerHTML=`
+        <div class="mode-note">
+          第 ${specialIndex+1}/${specialDeck.length} 題｜${sourceLabel}｜聽單字，選出字母組合
+        </div>
+        <div class="phonics-prompt">🔊 ${maskPhonicsPattern(current.en, pat)}</div>
+        <div class="options"></div>`;
+
+      const box=specialGameEl.querySelector(".options");
+      let locked = false;
+
+      opts.forEach(p=>{
+        const b=document.createElement("button");
+        b.className="option";
+        b.textContent=p;
+
+        b.addEventListener("click",()=>{
+          if (locked) return;
+
+          if(p===pat){
+            locked = true;
+            b.classList.add("correct");
+            playCorrect();
+            score += 10;
+            correctCount++;
+            revealWrongAfterSolved(current.id);
+
+            messageEl.textContent = info.source === "week"
+              ? `答對！${current.en} → ${pat}（Week ${info.week} 教材規則）`
+              : `答對！${current.en} → ${pat}（通用規則）`;
+
+            speakText(current.en);
+            showScorePop("+10","good");
+            updateSpecialStats();
+            advanceSpecialGame(renderPhonicsGame, "自然發音完成！");
+          } else {
+            b.classList.add("wrong");
+            playWrong();
+            recordWrong(current.id);
+            const deducted = recordSpecialWrong();
+
+            messageEl.textContent = deducted
+              ? "累積錯 3 次，扣 5 分。答案不會直接顯示，再試一次。"
+              : `再聽一次；錯誤 ${wrongAttempts}/3。答案不會直接顯示。`;
+          }
+        });
+
+        box.appendChild(b);
+      });
+
+      messageEl.textContent = info.source === "week"
+        ? `這題依 Week ${info.week} 教材 phonics 規則出題。`
+        : "這題沒有明確 Week phonics 對應，使用通用規則。";
+
+      updateSpecialStats();
+      speakText(current.en);
+    }
+
+    function renderSentenceGame() {
+      clearSpecialTimer();
+      setStandardVisibility(false);
+
+      if (!specialDeck.length) {
+        specialDeck = buildSpecialDeck(w =>
+          !!(SENTENCE_BANK[normalizeLetters(w.en)] || SENTENCE_BANK[w.en.toLowerCase()])
+        );
+        specialIndex = 0;
+      }
+
+      if(!specialDeck.length){
+        specialGameEl.innerHTML="<div class='mode-note'>這個 Week 目前沒有句子題庫。</div>";
+        messageEl.textContent="可再補充這個 Week 的例句。";
+        return;
+      }
+
+      current = specialDeck[specialIndex];
+      const key = SENTENCE_BANK[current.en.toLowerCase()] ? current.en.toLowerCase() : normalizeLetters(current.en);
+      const sentence = SENTENCE_BANK[key];
+      currentSentenceTemplate = sentence;
+
+      const distractors=shuffle(getSelectedWordPool().filter(w=>w.id!==current.id)).slice(0,4);
+      const opts=shuffle([current,...distractors]);
+
+      specialGameEl.innerHTML=`<div class="mode-note">第 ${specialIndex+1}/${specialDeck.length} 題｜選出最適合放進句子的單字</div><div class="sentence-box">${sentence.replace("____",'<span class="sentence-blank">____</span>')}</div><div class="action-row"><button type="button" id="speakSentence">🔊 唸完整句子</button></div><div class="options"></div>`;
+
+      specialGameEl.querySelector("#speakSentence").addEventListener("click",()=>{
+        const fullSentence = currentSentenceTemplate.replace("____", current.en);
+        speakText(fullSentence);
+      });
+
+      const box=specialGameEl.querySelector(".options");
+      let locked = false;
+
+      opts.forEach(w=>{
+        const b=document.createElement("button");
+        b.className="option";
+        b.textContent=w.en;
+        b.addEventListener("click",()=>{
+          if (locked) return;
+
+          if(w.id===current.id){
+            locked = true;
+            b.classList.add("correct");
+            playCorrect();
+            score += 10;
+            correctCount++;
+            revealWrongAfterSolved(current.id);
+            const full=sentence.replace("____",current.en);
+            messageEl.textContent=full;
+            speakText(full);
+            showScorePop("+10","good");
+            updateSpecialStats();
+            advanceSpecialGame(renderSentenceGame, "句子填空完成！");
+          } else {
+            b.classList.add("wrong");
+            playWrong();
+            recordWrong(current.id);
+            const deducted = recordSpecialWrong();
+            messageEl.textContent = deducted
+              ? "累積錯 3 次，扣 5 分。這個單字已記錄。"
+              : `這個單字不合適；錯誤 ${wrongAttempts}/3。這個單字已記錄。`;
+          }
+        });
+        box.appendChild(b);
+      });
+
+      messageEl.textContent="句子會自動朗讀；也可以按 🔊 再聽一次。";
+      updateSpecialStats();
+
+      // 自動朗讀完整正確句子。
+      const autoSentence = currentSentenceTemplate.replace("____", current.en);
+      setTimeout(() => {
+        if (gameTypeEl.value === "sentence" && currentSentenceTemplate === sentence) {
+          speakText(autoSentence);
+        }
+      }, 350);
+    }
+
+    // ----- Game -----
+    function buildDeck() {
+      const requestedCount = Number(roundCountEl.value);
+      const pool = getSelectedWordPool();
+      const count = Math.min(requestedCount, pool.length);
+      const lastDeckIds = loadLastDeckIds();
+
+      // 錯誤單字只從目前選定的 Week 中優先出題，最多 3 個。
+      const poolIds = new Set(pool.map(w => w.id));
+      const wrongWords = shuffle(
+        loadWrongIds().map(getWordById).filter(w => w && poolIds.has(w.id))
+      ).slice(0, Math.min(3, count));
+      const wrongSet = new Set(wrongWords.map(w => w.id));
+
+      const freshPool = pool.filter(w => !wrongSet.has(w.id) && !lastDeckIds.includes(w.id));
+      const fallbackPool = pool.filter(w => !wrongSet.has(w.id));
+
+      let fresh = shuffle(freshPool).slice(0, count - wrongWords.length);
+      if (fresh.length < count - wrongWords.length) {
+        const used = new Set(fresh.map(w => w.id));
+        const more = shuffle(fallbackPool.filter(w => !used.has(w.id))).slice(0, (count - wrongWords.length) - fresh.length);
+        fresh = [...fresh, ...more];
+      }
+
+      const nextDeck = shuffle([...wrongWords, ...fresh]).slice(0, count);
+      saveLastDeckIds(nextDeck.map(w => w.id));
+      return nextDeck;
+    }
+
+    function buildOptions(answer) {
+      // 優先使用同 Week 當干擾選項；若不足 4 個，再從全部單字補足。
+      const samePool = getSelectedWordPool().filter(w => w.id !== answer.id);
+      let distractors = shuffle(samePool).slice(0, 4);
+
+      if (distractors.length < 4) {
+        const used = new Set([answer.id, ...distractors.map(w => w.id)]);
+        const extra = shuffle(wordBank.filter(w => !used.has(w.id)))
+          .slice(0, 4 - distractors.length);
+        distractors = [...distractors, ...extra];
+      }
+      return shuffle([answer, ...distractors]);
+    }
+
+    function optionText(item) {
+      return quizModeEl.value === "zh_to_en" ? item.en : item.zh;
+    }
+
+    function questionMainText(item) {
+      return quizModeEl.value === "zh_to_en" ? item.zh : item.en;
+    }
+
+    function questionSubText(item) {
+      return quizModeEl.value === "zh_to_en" ? "選出對應英文" : (item.kk || "");
+    }
+
+    function promptText() {
+      return quizModeEl.value === "zh_to_en"
+        ? "這個中文是哪一個英文？"
+        : "這個英文是什麼意思？";
+    }
+
+    function updateStats() {
+      const total = deck.length || Number(roundCountEl.value);
+      const solvedCount = deck.length
+        ? Math.min(currentIndex + (answered ? 1 : 0), total)
+        : 0;
+
+      roundEl.textContent = `${Math.min(currentIndex + 1, total)}/${total}`;
+      correctEl.textContent = correctCount;
+      scoreEl.textContent = score;
+      wrongAttemptsEl.textContent = `${wrongAttempts}/3`;
+      starsEl.textContent = stars;
+      barEl.style.width = `${total ? (solvedCount / total) * 100 : 0}%`;
+    }
+
+    function renderQuestion() {
+      if (!deck.length) return;
+      setStandardVisibility(true);
+
+      current = deck[currentIndex];
+      answered = false;
+      nextBtn.disabled = true;
+      nextBtn.textContent = "下一題";
+      wordEl.textContent = questionMainText(current);
+      kkEl.textContent = questionSubText(current);
+      document.querySelector(".prompt-label").textContent = promptText();
+      messageEl.textContent = quizModeEl.value === "zh_to_en"
+        ? "請選出正確的英文！"
+        : "請選出正確的中文意思！";
+      optionsEl.innerHTML = "";
+
+      const options = buildOptions(current);
+      options.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.textContent = optionText(item);
+        btn.dataset.id = item.id;
+        btn.addEventListener("click", () => chooseOption(btn, item));
+        optionsEl.appendChild(btn);
+      });
+
+      updateStats();
+      setBuddyMood("thinking", "這題我看好你！");
+      setTimeout(speakQuestion, 250);
+    }
+
+    function showScorePop(text, type) {
+      const pop = document.createElement("div");
+      pop.className = `score-pop ${type}`;
+      pop.textContent = text;
+      document.body.appendChild(pop);
+      setTimeout(() => pop.remove(), 950);
+    }
+
+    function showReward(text, emoji, showStars = false) {
+      rewardEmojiEl.textContent = emoji;
+      rewardTextEl.textContent = text;
+      rewardStarsEl.style.display = showStars ? "block" : "none";
+      rewardEl.classList.remove("show");
+      void rewardEl.offsetWidth;
+      rewardEl.classList.add("show");
+    }
+
+
+    function autoAdvanceAfterCorrect() {
+      nextBtn.disabled = true;
+      nextBtn.textContent = "自動下一題...";
+      setTimeout(() => {
+        if (currentIndex >= deck.length - 1) {
+          finishGame();
+        } else {
+          currentIndex++;
+          nextBtn.textContent = "下一題";
+          renderQuestion();
+        }
+      }, Number(autoNextDelayEl.value));
+    }
+
+    function chooseOption(button, item) {
+      if (answered) return;
+      ensureAudio();
+
+      const isCorrect = item.id === current.id;
+      const buttons = [...optionsEl.querySelectorAll(".option")];
+
+      if (isCorrect) {
+        answered = true;
+
+        // Only after the learner chooses correctly do we lock the choices.
+        buttons.forEach(btn => btn.disabled = true);
+        button.classList.add("correct");
+
+        correctCount++;
+        score += 10;
+        revealWrongAfterSolved(current.id);
+        playCorrect();
+        showScorePop("+10", "good");
+        setBuddyMood("happy", "答對了！+10");
+        messageEl.textContent = `答對！${current.en} = ${current.zh}，停一下再進下一題...`;
+
+        if (quizModeEl.value === "zh_to_en") {
+          setTimeout(speakAnswerWord, 150);
+        }
+
+        updateStats();
+        autoAdvanceAfterCorrect();
+        return;
+      }
+
+      // Wrong answer:
+      // - do NOT reveal the correct choice
+      // - do NOT leave the question
+      // - disable only the wrong button so the learner can try another choice
+      button.classList.add("wrong");
+      button.disabled = true;
+
+      wrongAttempts++;
+      recordWrong(current.id);
+      playWrong();
+
+      if (wrongAttempts >= 3) {
+        score -= 5;
+        wrongAttempts = 0;
+        showScorePop("-5", "bad");
+        setBuddyMood("sad", "錯 3 次，扣 5 分");
+        messageEl.textContent = "這個答案不對。累積錯 3 次，扣 5 分；再試另一個答案。";
+      } else {
+        showScorePop(`錯 ${wrongAttempts}/3`, "bad");
+        setBuddyMood("sad", `錯 ${wrongAttempts}/3，再試一次`);
+        messageEl.textContent = `這個答案不對。錯誤 ${wrongAttempts}/3；再試另一個答案。`;
+      }
+
+      // Keep Next disabled until the learner gets this question right.
+      nextBtn.disabled = true;
+      updateStats();
+    }
+
+    function finishGame() {
+      const perfect = correctCount === deck.length;
+      barEl.style.width = "100%";
+
+      if (perfect) {
+        stars = 3;
+        playWin();
+        showReward("全部答對！", "🏆", true);
+        setBuddyMood("happy", "太強了！3 顆星星！");
+        messageEl.textContent = `全部答對！得到 3 顆星星。總分 ${score}`;
+      } else {
+        stars = correctCount >= Math.ceil(deck.length * 0.8) ? 2 : correctCount >= Math.ceil(deck.length * 0.5) ? 1 : 0;
+        showReward(`完成！${stars} 顆星`, stars ? "⭐" : "💪", stars === 3);
+        setBuddyMood(stars ? "happy" : "thinking", "再玩一次會更熟！");
+        messageEl.textContent = `完成！答對 ${correctCount}/${deck.length}，得到 ${stars} 顆星。總分 ${score}`;
+      }
+
+      showFinishCelebration({
+        title: perfect ? "全部答對！" : "挑戰完成！",
+        summary: `答對 ${correctCount}/${deck.length} · 分數 ${score}`,
+        stars,
+        perfect
+      });
+
+      updateStats();
+      nextBtn.disabled = true;
+    }
+
+    function nextQuestion() {
+      if (currentIndex >= deck.length - 1) {
+        finishGame();
+        return;
+      }
+      currentIndex++;
+      renderQuestion();
+    }
+
+    function newGame() {
+      hideFinishCelebration();
+      updateGameModeUI();
+      if (!wordBank.length) {
+        messageEl.textContent = "找不到 word_quest_word_bank.js，請確認單字庫和 HTML 放同一個資料夾。";
+        return;
+      }
+
+      deck = buildDeck();
+      if (!deck.length) {
+        messageEl.textContent = "這個週次目前沒有單字。";
+        return;
+      }
+      clearSpecialTimer();
+      specialDeck = [];
+      specialIndex = 0;
+      currentIndex = 0;
+      correctCount = 0;
+      score = 0;
+      stars = 0;
+      wrongAttempts = 0;
+      sessionWrongIds = [];
+      visibleWrongIds = [];
+      nextBtn.textContent = "下一題";
+      renderByGameType();
+      renderWrongList();
+    }
+
+
+    finishAgainBtn.addEventListener("click", () => {
+      hideFinishCelebration();
+      newGame();
+    });
+    finishCloseBtn.addEventListener("click", hideFinishCelebration);
+
+    volumeEl.addEventListener("input", updateVolumeUI);
+    musicStyleEl.addEventListener("change", updateMusicStyle);
+    musicToggleEl.addEventListener("click", () => {
+      if (musicEnabled) stopMusic();
+      else startMusic();
+    });
+    document.getElementById("newGame").addEventListener("click", newGame);
+    document.getElementById("speakBtn").addEventListener("click", speakCurrentGamePrompt);
+    document.getElementById("speakBtn2").addEventListener("click", speakCurrentGamePrompt);
+    nextBtn.addEventListener("click", nextQuestion);
+    roundCountEl.addEventListener("change", newGame);
+    weekSelectEl.addEventListener("change", () => {
+      safeStorage.setItem(WEEK_KEY, weekSelectEl.value);
+      newGame();
+    });
+
+    memorySizeEl.addEventListener("change", () => {
+      safeStorage.setItem(MEMORY_SIZE_KEY, memorySizeEl.value);
+      if (gameTypeEl.value === "memory") newGame();
+    });
+
+    memoryPreviewEl.addEventListener("change", () => {
+      safeStorage.setItem(MEMORY_PREVIEW_KEY, memoryPreviewEl.value);
+      if (gameTypeEl.value === "memory") newGame();
+    });
+    gameTypeEl.addEventListener("change", () => {
+      switchGameType(gameTypeEl.value);
+    });
+
+    gameModeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        switchGameType(btn.dataset.game);
+      });
+    });
+    quizModeEl.addEventListener("change", () => {
+      safeStorage.setItem(QUIZ_MODE_KEY, quizModeEl.value);
+      if (gameTypeEl.value === "quiz") newGame();
+    });
+
+    autoNextDelayEl.addEventListener("change", () => {
+      safeStorage.setItem(AUTO_NEXT_DELAY_KEY, autoNextDelayEl.value);
+    });
+    characterSelectEl.addEventListener("change", () => setCharacter(characterSelectEl.value));
+
+    loadVolume();
+    loadMusicStyle();
+
+    const savedGameType = safeStorage.getItem(GAME_TYPE_KEY);
+    if (savedGameType && [...gameTypeEl.options].some(opt => opt.value === savedGameType)) {
+      gameTypeEl.value = savedGameType;
+    }
+    updateGameModeUI();
+
+    const savedMode = safeStorage.getItem(QUIZ_MODE_KEY);
+    if (savedMode && [...quizModeEl.options].some(opt => opt.value === savedMode)) {
+      quizModeEl.value = savedMode;
+    }
+
+    const savedDelay = safeStorage.getItem(AUTO_NEXT_DELAY_KEY);
+    if (savedDelay && [...autoNextDelayEl.options].some(opt => opt.value === savedDelay)) {
+      autoNextDelayEl.value = savedDelay;
+    }
+
+    populateWeekSelect();
+
+    const savedMemorySize = safeStorage.getItem(MEMORY_SIZE_KEY);
+    if (savedMemorySize && [...memorySizeEl.options].some(opt => opt.value === savedMemorySize)) {
+      memorySizeEl.value = savedMemorySize;
+    }
+
+    const savedMemoryPreview = safeStorage.getItem(MEMORY_PREVIEW_KEY);
+    if (savedMemoryPreview && [...memoryPreviewEl.options].some(opt => opt.value === savedMemoryPreview)) {
+      memoryPreviewEl.value = savedMemoryPreview;
+    }
+
+    const savedCharacter = safeStorage.getItem(CHARACTER_KEY) || "lion";
+    characterSelectEl.value = savedCharacter;
+    setCharacter(savedCharacter);
+    renderWrongList();
+    newGame();
+  </script>
+</body>
+</html>
