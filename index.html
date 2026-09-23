@@ -701,8 +701,8 @@
       border-radius: 18px; border: 3px solid #4dabf7; background: #d0ebff; cursor: pointer;
     }
     .audio-unlock-note {
-      margin-top: 14px; padding: 12px; border-radius: 14px; background: #fff3bf;
-      color: #7c4a03; font-weight: 800; line-height: 1.45;
+      margin-top: 14px; padding: 10px; border-radius: 12px;
+      background: #fff3bf; color: #7c4a03; font-weight: 800; line-height: 1.45;
     }
 
   </style>
@@ -865,17 +865,15 @@
 
 
 
-    <div id="audioUnlockOverlay" class="audio-unlock-overlay" aria-hidden="false">
+    <div id="lineAudioOverlay" class="audio-unlock-overlay hidden" aria-hidden="true">
       <div class="audio-unlock-card">
         <div class="audio-unlock-icon">🔊</div>
-        <div class="audio-unlock-title">開啟遊戲聲音</div>
-        <div class="audio-unlock-text" id="audioUnlockText">
-          請先點一下按鈕，讓瀏覽器允許單字與句子朗讀。
+        <div class="audio-unlock-title">LINE 聲音設定</div>
+        <div class="audio-unlock-text">
+          LINE 內建瀏覽器需要先點一下，才能啟動英文朗讀。
         </div>
-        <button type="button" id="audioUnlockBtn">開啟聲音並開始</button>
-        <div class="audio-unlock-note" id="lineBrowserNote" hidden>
-          LINE 內建瀏覽器可能限制語音。若按下後仍沒有聲音，請用右上角選單「以瀏覽器開啟」。
-        </div>
+        <button type="button" id="lineAudioUnlockBtn">開啟聲音</button>
+        <div class="audio-unlock-note" id="lineAudioStatus"></div>
       </div>
     </div>
 
@@ -1622,10 +1620,9 @@ window.WORD_QUEST_WORD_BANK = [
     const finishStarsEl = document.getElementById("finishStars");
     const finishAgainBtn = document.getElementById("finishAgain");
     const finishCloseBtn = document.getElementById("finishClose");
-    const audioUnlockOverlayEl = document.getElementById("audioUnlockOverlay");
-    const audioUnlockBtn = document.getElementById("audioUnlockBtn");
-    const audioUnlockTextEl = document.getElementById("audioUnlockText");
-    const lineBrowserNoteEl = document.getElementById("lineBrowserNote");
+    const lineAudioOverlayEl = document.getElementById("lineAudioOverlay");
+    const lineAudioUnlockBtn = document.getElementById("lineAudioUnlockBtn");
+    const lineAudioStatusEl = document.getElementById("lineAudioStatus");
 
 
 
@@ -1678,11 +1675,12 @@ window.WORD_QUEST_WORD_BANK = [
     let memoryPreviewTimer = null;
     let scrambleState = null;
     let currentSentenceTemplate = "";
-    let speechUnlocked = false;
-    let speechVoice = null;
+    let lineAudioUnlocked = false;
+    let cachedEnglishVoice = null;
 
     function isLineInAppBrowser() {
-      return /Line\//i.test(navigator.userAgent) || /\bLINE\b/i.test(navigator.userAgent);
+      const ua = navigator.userAgent || "";
+      return /Line\//i.test(ua) || /\bLINE\b/i.test(ua);
     }
 
     function pickEnglishVoice() {
@@ -1693,37 +1691,18 @@ window.WORD_QUEST_WORD_BANK = [
              voices[0] || null;
     }
 
-    function primeSpeechEngine() {
-      if (!("speechSynthesis" in window)) return false;
-      try {
-        window.speechSynthesis.cancel();
-        speechVoice = pickEnglishVoice();
-        const u = new SpeechSynthesisUtterance("Sound ready");
-        u.lang = "en-US";
-        u.rate = 0.9;
-        u.pitch = 1.0;
-        u.volume = Math.max(0.35, getVolume());
-        if (speechVoice) u.voice = speechVoice;
-        window.speechSynthesis.speak(u);
-        speechUnlocked = true;
-        return true;
-      } catch (e) {
-        speechUnlocked = false;
-        return false;
+    function createUtterance(text) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.rate = 0.82;
+      u.pitch = 1.06;
+      u.volume = getVolume();
+      const voice = cachedEnglishVoice || pickEnglishVoice();
+      if (voice) {
+        cachedEnglishVoice = voice;
+        u.voice = voice;
       }
-    }
-
-    function showAudioUnlockOverlay() {
-      if (!audioUnlockOverlayEl) return;
-      audioUnlockOverlayEl.classList.remove("hidden");
-      audioUnlockOverlayEl.setAttribute("aria-hidden", "false");
-      if (lineBrowserNoteEl) lineBrowserNoteEl.hidden = !isLineInAppBrowser();
-    }
-
-    function hideAudioUnlockOverlay() {
-      if (!audioUnlockOverlayEl) return;
-      audioUnlockOverlayEl.classList.add("hidden");
-      audioUnlockOverlayEl.setAttribute("aria-hidden", "true");
+      return u;
     }
 
     let specialDeck = [];
@@ -2376,33 +2355,23 @@ window.WORD_QUEST_WORD_BANK = [
     function speakText(text) {
       if (!text || !("speechSynthesis" in window)) return;
 
+      // Only LINE in-app browser requires our explicit unlock gate.
+      if (isLineInAppBrowser() && !lineAudioUnlocked) {
+        if (lineAudioOverlayEl) {
+          lineAudioOverlayEl.classList.remove("hidden");
+          lineAudioOverlayEl.setAttribute("aria-hidden", "false");
+        }
+        return;
+      }
+
       try {
-        if (!speechUnlocked) {
-          showAudioUnlockOverlay();
-          return;
-        }
-
         window.speechSynthesis.cancel();
-
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "en-US";
-        u.rate = 0.82;
-        u.pitch = 1.06;
-        u.volume = getVolume();
-
-        const v = speechVoice || pickEnglishVoice();
-        if (v) {
-          speechVoice = v;
-          u.voice = v;
-        }
-
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-        }
-
-        window.speechSynthesis.speak(u);
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+        window.speechSynthesis.speak(createUtterance(text));
       } catch (e) {
-        showAudioUnlockOverlay();
+        if (isLineInAppBrowser() && lineAudioStatusEl) {
+          lineAudioStatusEl.textContent = "LINE 目前無法啟動語音，請用系統瀏覽器開啟。";
+        }
       }
     }
     function speakCurrentGamePrompt() {
@@ -3388,19 +3357,46 @@ window.WORD_QUEST_WORD_BANK = [
 
     if ("speechSynthesis" in window) {
       window.speechSynthesis.onvoiceschanged = () => {
-        speechVoice = pickEnglishVoice();
+        cachedEnglishVoice = pickEnglishVoice();
       };
     }
 
-    audioUnlockBtn.addEventListener("click", () => {
-      const ok = primeSpeechEngine();
-      if (ok) {
-        hideAudioUnlockOverlay();
-        audioUnlockTextEl.textContent = "聲音已開啟。";
-        setTimeout(() => speakText("Let's play!"), 80);
-      } else {
-        audioUnlockTextEl.textContent = "目前瀏覽器無法啟動語音，請改用 Chrome 或系統瀏覽器開啟。";
-        if (lineBrowserNoteEl) lineBrowserNoteEl.hidden = false;
+    lineAudioUnlockBtn.addEventListener("click", () => {
+      if (!("speechSynthesis" in window)) {
+        lineAudioStatusEl.textContent = "這個 LINE 版本不支援瀏覽器語音，請改用 Chrome / Safari。";
+        return;
+      }
+
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+
+        // MUST be called directly inside the user's click gesture.
+        const test = createUtterance("Sound ready");
+        test.onstart = () => {
+          lineAudioUnlocked = true;
+          lineAudioStatusEl.textContent = "聲音已開啟。";
+        };
+        test.onend = () => {
+          lineAudioUnlocked = true;
+          lineAudioOverlayEl.classList.add("hidden");
+          lineAudioOverlayEl.setAttribute("aria-hidden", "true");
+        };
+        test.onerror = () => {
+          lineAudioStatusEl.textContent = "LINE 內建瀏覽器阻擋了語音，請用 Chrome / Safari 開啟。";
+        };
+
+        lineAudioUnlocked = true;
+        window.speechSynthesis.speak(test);
+
+        // Hide shortly after the synchronous speech request; no second speech call here.
+        setTimeout(() => {
+          lineAudioOverlayEl.classList.add("hidden");
+          lineAudioOverlayEl.setAttribute("aria-hidden", "true");
+        }, 700);
+      } catch (e) {
+        lineAudioUnlocked = false;
+        lineAudioStatusEl.textContent = "LINE 內建瀏覽器阻擋了語音，請用 Chrome / Safari 開啟。";
       }
     });
 
@@ -3453,6 +3449,14 @@ window.WORD_QUEST_WORD_BANK = [
       safeStorage.setItem(AUTO_NEXT_DELAY_KEY, autoNextDelayEl.value);
     });
     characterSelectEl.addEventListener("change", () => setCharacter(characterSelectEl.value));
+
+    if (isLineInAppBrowser() && lineAudioOverlayEl) {
+      lineAudioOverlayEl.classList.remove("hidden");
+      lineAudioOverlayEl.setAttribute("aria-hidden", "false");
+      lineAudioStatusEl.textContent = "請先點「開啟聲音」。";
+    } else {
+      lineAudioUnlocked = true;
+    }
 
     loadVolume();
     loadMusicStyle();
